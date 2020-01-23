@@ -50,20 +50,24 @@ def handle_text_message(event):
 
 @handler.add(BeaconEvent)
 def handle_beacon_event(event):
+    global status
+    status = 0
     if event.beacon.hwid == HWId:
         msg = 'I\'m Line Beacon!\n HWId = ' + HWId  
         userId =  event.source.user_id 
-        print("userid.....", userId)
+        print("userid...", userId)
         with open('userid_list.txt', mode = 'r', encoding = "utf-8") as f:
           for line in f:
-            if line != userId:
+            print("line...", line)
+            if userId+'\n' == line:
               print("You have already visited!")
               newmsg = msg + '\nYou have already visited!'
-            else:
-              print ("You are new visitor!")
-              newmsg = msg + '\nYou are new visitor!'
-              with open('userid_list.txt', mode='a', encoding = "utf-8") as f:
-               f.write(userId+'\n') 
+              status = 1
+        if status == 0:   
+          print ("You are a new visitor!")
+          newmsg = msg + '\nYou are a new visitor!'
+          with open('userid_list.txt', mode='a', encoding = "utf-8") as f:
+            f.write(userId + '\n') 
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=newmsg))
