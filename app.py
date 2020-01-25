@@ -1,6 +1,7 @@
 # Author: JC
 # Date: 2018/11/12 18:54
-# encoding: utf-8
+# -*- coding: UTF-8 -*-
+
 from flask import Flask, request, abort
 
 from linebot import (
@@ -12,6 +13,7 @@ from linebot.exceptions import (
 from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage, BeaconEvent
 )
+import json
 access_token = '4vOSpHm6ybXdM4H8juFy82HfM2TSUVE3Ty2FLoT+5kjTzNhQdzz1dUfquvRaMCKuqbt/YYXbPj2Kv3W2MKDkxdtZWJZgcC+gKg2RyphLbPF0uaqybQurPvX9sT+eFFY1Qf8z4KuhvqT3tPdr/pX+/wdB04t89/1O/w1cDnyilFU='
 channel_secret = '17af62e5969376a42034ad93f6bf9efe'
 
@@ -19,7 +21,7 @@ app = Flask(__name__)
 
 line_bot_api = LineBotApi(access_token)
 handler = WebhookHandler(channel_secret)
-HWId = "0138532680"
+HWId = "013874c8c8"
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -35,42 +37,46 @@ def callback():
         handler.handle(body, signature)
     except InvalidSignatureError:
         abort(400)
-
     return 'OK'
-
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
+    userId =  event.source.user_id 	
     text = event.message.text  # message from user
-
+    command = text.split("~", 1)[0]
+    name = text.split("~", 1)[1]
+    print(command)
+    if (command == 'register'):
+       with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
+         load_dict = json.load(f) #讀取json檔案資料變成字典
+         load_dict[userId] = name #增加或修改註冊資料        
+       with open('userid_name.json', mode = 'w', encoding = "utf-8") as f:
+         json.dump(load_dict, f) # 將字典資料寫入json檔案                    
     line_bot_api.reply_message(
         event.reply_token,
-        TextSendMessage(text=text))  # reply the same message from user
-
+        TextSendMessage(text="身份資料註冊成功!")) # reply the same message from user
 
 @handler.add(BeaconEvent)
 def handle_beacon_event(event):
     global status
     status = 0
     if event.beacon.hwid == HWId:
-        msg = 'I\'m Line Beacon!\n HWId = ' + HWId  
+        msg = 'I\'m Line Beacon! HWId = ' + HWId  
         userId =  event.source.user_id 
         print("userid...", userId)
-        with open('userid_list.txt', mode = 'r', encoding = "utf-8") as f:
-          for line in f:
-            print("line...", line)
-            if userId+'\n' == line:
-              print("You have already visited!")
-              newmsg = msg + '\nYou have already visited!'
-              status = 1
-        if status == 0:   
-          print ("You are a new visitor!")
-          newmsg = msg + '\nYou are a new visitor!'
-          with open('userid_list.txt', mode='a', encoding = "utf-8") as f:
-            f.write(userId + '\n') 
+        with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
+          load_dict = json.load(f) #讀取檔案字串轉成字典物件
+          print(load_dict)
+          try:
+            print(load_dict[userId])
+            newmsg = "Hi, " + load_dict[userId] + '. ' + msg
+          except KeyError:  
+            print("who are you?....")
+            newmsg = "Hi,  " + msg + "\n Please input command \'register~your name\' to let me know who you are?"             
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=newmsg))
+    
+if __name__ == "__main__":   
+	app.run(debug=True, host='127.0.0.1', port=5000)            
 
-if __name__ == "__main__":           
-    app.run(debug=True, host='127.0.0.1', port=5000)    
