@@ -14,15 +14,16 @@ from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage, BeaconEvent
 )
 import json
+import requests
 access_token = '4vOSpHm6ybXdM4H8juFy82HfM2TSUVE3Ty2FLoT+5kjTzNhQdzz1dUfquvRaMCKuqbt/YYXbPj2Kv3W2MKDkxdtZWJZgcC+gKg2RyphLbPF0uaqybQurPvX9sT+eFFY1Qf8z4KuhvqT3tPdr/pX+/wdB04t89/1O/w1cDnyilFU='
 channel_secret = '17af62e5969376a42034ad93f6bf9efe'
+line_token = "3eTUCezVGnutNS538jzHElsVlWoHh9nTSpGVm2tbDfx"
 
 app = Flask(__name__)
 
 line_bot_api = LineBotApi(access_token)
 handler = WebhookHandler(channel_secret)
 HWId = "013874c8c8"
-
 @app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
@@ -72,10 +73,22 @@ def handle_beacon_event(event):
             newmsg = "Hi, " + load_dict[userId] + '. ' + msg
           except KeyError:  
             print("who are you?....")
-            newmsg = "Hi,  " + msg + "\n Please input command \'register~your name\' to let me know who you are?"             
+            newmsg = "Hi,  " + msg + "\n Please input command \'register~your name\' to let me know who you are?" 
+    notifymsg =  load_dict[userId] + '報到'
+    lineNotifyMessage(line_token, notifymsg)            
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=newmsg))
+
+def lineNotifyMessage(line_token, msg):
+      headers = {
+          "Authorization": "Bearer " + line_token, 
+          "Content-Type" : "application/x-www-form-urlencoded"
+      }
+      payload = {'message': msg}
+      r = requests.post("https://notify-api.line.me/api/notify", headers = headers, params = payload)
+      return r.status_code
+
     
 if __name__ == "__main__":   
 	app.run(debug=True, host='127.0.0.1', port=5000)            
