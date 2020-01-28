@@ -1,5 +1,3 @@
-# Author: JC
-# Date: 2018/11/12 18:54
 # -*- coding: UTF-8 -*-
 
 from flask import Flask, request, abort
@@ -13,8 +11,11 @@ from linebot.exceptions import (
 from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage, BeaconEvent
 )
+
 import json
 import requests
+from flask import render_template
+
 access_token = '4vOSpHm6ybXdM4H8juFy82HfM2TSUVE3Ty2FLoT+5kjTzNhQdzz1dUfquvRaMCKuqbt/YYXbPj2Kv3W2MKDkxdtZWJZgcC+gKg2RyphLbPF0uaqybQurPvX9sT+eFFY1Qf8z4KuhvqT3tPdr/pX+/wdB04t89/1O/w1cDnyilFU='
 channel_secret = '17af62e5969376a42034ad93f6bf9efe'
 line_token = "3eTUCezVGnutNS538jzHElsVlWoHh9nTSpGVm2tbDfx"
@@ -24,6 +25,22 @@ app = Flask(__name__)
 line_bot_api = LineBotApi(access_token)
 handler = WebhookHandler(channel_secret)
 HWId = "013874c8c8"
+@app.route('/')
+def showPage():
+ return render_template('index1.html')
+
+@app.route('/register', methods=['POST'])
+def register():
+  name = request.form.get('username')
+  userId =  request.form.get('userId')
+  print("userId....", userId)
+  with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
+   load_dict = json.load(f) #讀取json檔案資料變成字典
+   load_dict[userId] = name #增加或修改註冊資料        
+  with open('userid_name.json', mode = 'w', encoding = "utf-8") as f:
+   json.dump(load_dict, f) # 將字典資料寫入json檔案    
+  return name + " 註冊成功..."
+
 @app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
@@ -42,20 +59,15 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
-    userId =  event.source.user_id 	
+    userId = event.source.user_id
     text = event.message.text  # message from user
-    command = text.split("~", 1)[0]
-    name = text.split("~", 1)[1]
-    print(command)
-    if (command == 'register'):
-       with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
-         load_dict = json.load(f) #讀取json檔案資料變成字典
-         load_dict[userId] = name #增加或修改註冊資料        
-       with open('userid_name.json', mode = 'w', encoding = "utf-8") as f:
-         json.dump(load_dict, f) # 將字典資料寫入json檔案                    
+    if text == 'help':
+      replymsg = "這是一個報到系統，利用手機的藍牙可以偵測你的身份。使用前必須先到 line://app/1653785431-m94O4qR9 註冊"
+    else:
+      replymsg = "輸入 help"                              
     line_bot_api.reply_message(
         event.reply_token,
-        TextSendMessage(text="身份資料註冊成功!")) # reply the same message from user
+        TextSendMessage(text=replymsg)) # reply the same message from user
 
 @handler.add(BeaconEvent)
 def handle_beacon_event(event):
@@ -71,14 +83,16 @@ def handle_beacon_event(event):
           try:
             print(load_dict[userId])
             newmsg = "Hi, " + load_dict[userId] + '. ' + msg
+            notifymsg =  load_dict[userId] + '報到'
+            lineNotifyMessage(line_token, notifymsg)            
           except KeyError:  
             print("who are you?....")
-            newmsg = "Hi,  " + msg + "\n Please input command \'register~your name\' to let me know who you are?" 
-    notifymsg =  load_dict[userId] + '報到'
-    lineNotifyMessage(line_token, notifymsg)            
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=newmsg))
+            newmsg = "Hi,  " + msg + "\n Please connect line://app/1653785431-m94O4qR9 to let me know who you are?" 
+                    
+        line_bot_api.reply_message(
+               event.reply_token,
+               TextSendMessage(text=newmsg))    
+    
 
 def lineNotifyMessage(line_token, msg):
       headers = {
@@ -91,5 +105,5 @@ def lineNotifyMessage(line_token, msg):
 
     
 if __name__ == "__main__":   
-	app.run(debug=True, host='127.0.0.1', port=5000)            
+	app.run(debug=True, host='0.0.0.0', port=5000)            
 
