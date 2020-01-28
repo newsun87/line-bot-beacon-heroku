@@ -27,7 +27,7 @@ handler = WebhookHandler(channel_secret)
 HWId = "013874c8c8"
 @app.route('/')
 def showPage():
- return render_template('index1.html')
+ return render_template('index.html')
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -68,7 +68,7 @@ def handle_text_message(event):
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=replymsg)) # reply the same message from user
-
+        
 @handler.add(BeaconEvent)
 def handle_beacon_event(event):
     global status
@@ -92,7 +92,6 @@ def handle_beacon_event(event):
         line_bot_api.reply_message(
                event.reply_token,
                TextSendMessage(text=newmsg))    
-    
 
 def lineNotifyMessage(line_token, msg):
       headers = {
