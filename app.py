@@ -36,7 +36,10 @@ def register():
   print("userId....", userId)
   with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
    load_dict = json.load(f) #讀取json檔案資料變成字典
-   load_dict[userId] = name #增加或修改註冊資料        
+  if load_dict[userId]!="":
+    notifymsg = load_dict[userId] + "取消報到"
+    lineNotifyMessage(line_token, notifymsg)       
+    load_dict[userId] = name #增加或修改註冊資料        
   with open('userid_name.json', mode = 'w', encoding = "utf-8") as f:
    json.dump(load_dict, f) # 將字典資料寫入json檔案    
   return name + " 註冊成功..."
