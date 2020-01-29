@@ -27,7 +27,7 @@ handler = WebhookHandler(channel_secret)
 HWId = "013874c8c8"
 @app.route('/')
 def showPage():
- return render_template('index1.html')
+ return render_template('index.html')
 
 @app.route('/register', methods=['POST'])
 def register():

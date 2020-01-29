@@ -77,6 +77,20 @@ userId: " + profile.userId + "\npictureUrl: " + profile.pictureUrl
                     }
                 );
             });
+             //ButtonSendMsg
+            $('#ButtonSendMsg').click(function () {
+                liff.sendMessages([
+                    {
+                        type: 'text',
+                        text: 'register~' + $('#msg').val()
+                        
+                    }
+                ])
+                    .then(() => {
+                        liff.closeWindow();
+                    })
+            });
+
           }             
     </script>
 </head>
@@ -84,13 +98,9 @@ userId: " + profile.userId + "\npictureUrl: " + profile.pictureUrl
     <div class="row">
 		
         <div id="MainDiv" class="col-md-6" style="margin:5px">
-			<form action="/register" method="post">
-             <label>Name:</label>
-             <input type="textbox" name="username"><br>
-             <label>userId:</label>
-             <input type="textbox" name="userId" value="">
-             <input type="submit" value="註冊"> 
-           </form> 
+			<label>Name:</label>
+            <input class="form-control" type="text" id="msg" />
+            <button class="btn btn-primary" id="ButtonSendMsg">註冊</button>
            <p></p>          			
             <button class="btn btn-primary" id="ButtonGetContext">Get Context</button>
             <button class="btn btn-primary" id="ButtonScan">掃描 QR Code</button>
