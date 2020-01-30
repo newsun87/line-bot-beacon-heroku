@@ -70,18 +70,23 @@ def handle_text_message(event):
       print(command)
       if (command == 'register'):
        with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
-         load_dict = json.load(f) #讀取json檔案資料變成字典         
-       if load_dict[userId]!="":
-         notifymsg = load_dict[userId] + " 取消報到"
-         lineNotifyMessage(line_token, notifymsg)       
-         load_dict[userId] = name #增加或修改註冊資料              
+         load_dict = json.load(f) #讀取json檔案資料變成字典
+       try :
+         prv_name = load_dict[userId]
+         if prv_name!="":
+             notifymsg = load_dict[userId] + " 取消報到"
+             lineNotifyMessage(line_token, notifymsg)       
+             load_dict[userId] = name #增加或修改註冊資料             
+             replymsg =  prv_name + " 修改成 " + load_dict[userId] + " 資料成功!";           
+       except KeyError:	     
+         load_dict[userId] = name #增加或修改註冊資料 
+         replymsg = load_dict[userId] + " 註冊資料成功"         
        with open('userid_name.json', mode = 'w', encoding = "utf-8") as f:
-         json.dump(load_dict, f) # 將字典資料寫入json檔案
-       replymsg =  load_dict[userId] + " 身份資料註冊成功!";  
+         json.dump(load_dict, f) # 將字典資料寫入json檔案 
     elif text == 'help':
        replymsg = "這是一個報到系統，利用手機的藍牙可以偵測你的身份。使用前必須先到 line://app/1653785431-m94O4qR9 註冊"
     else:
-       replymsg = "輸入 help"                              
+       replymsg = "輸入 help"                                 
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=replymsg)) # reply the same message from user

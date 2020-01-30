@@ -59,8 +59,9 @@
             $('#ButtonGetContext').click(() => {
 				const context = liff.getContext();
                 var contextInfo = "type: " + context.type + "\n\
-utouid: " + context.utouId + "\nuserid: " + context.userId + "\n\
-viewType: " + context.viewType + "\naccessTokenHash: " + context.accessTokenHash ;
+utouId: " + context.utouId + "\nroomId: " + context.groupId + "\n\
+groudId: " + context.groupId + "\nuserid: " + context.userId + "\n\
+viewType: " + context.viewType + "\naccessTokenHash: " + context.accessTokenHash
                 $('#field_info').val(contextInfo);
             });
 
