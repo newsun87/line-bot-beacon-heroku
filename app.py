@@ -77,7 +77,9 @@ def handle_text_message(event):
              notifymsg = load_dict[userId] + " 取消報到"
              lineNotifyMessage(line_token, notifymsg)       
              load_dict[userId] = name #增加或修改註冊資料             
-             replymsg =  prv_name + " 修改成 " + load_dict[userId] + " 資料成功!";           
+             replymsg =  prv_name + " 修改成 " + load_dict[userId] + " 資料成功!"; 
+         else:
+             replymsg = "註冊資料不得空白"              
        except KeyError:	     
          load_dict[userId] = name #增加或修改註冊資料 
          replymsg = load_dict[userId] + " 註冊資料成功"         

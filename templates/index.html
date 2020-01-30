@@ -79,17 +79,22 @@ userId: " + profile.userId + "\npictureUrl: " + profile.pictureUrl
                 );
             });
              //ButtonSendMsg
-            $('#ButtonSendMsg').click(function () {
-                liff.sendMessages([
+            $('#ButtonSendMsg').click(function () {	
+				if ($('#msg').val()!=""){			
+                  liff.sendMessages([
                     {
                         type: 'text',
                         text: 'register~' + $('#msg').val()
                         
                     }
-                ])
+                  ])
                     .then(() => {
                         liff.closeWindow();
                     })
+                } 
+                else {
+					$('#field_info').val("註冊資料不得空白"); 
+				}	   
             });
 
           }             
