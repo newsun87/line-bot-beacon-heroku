@@ -29,7 +29,7 @@ handler = WebhookHandler(channel_secret)
 HWId = "013874c8c8"
 @app.route('/')
 def showPage():
- return render_template('index.html')
+  return render_template('index.html')
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -50,8 +50,30 @@ def callback():
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):    
     userId = event.source.user_id
-    text = event.message.text  # message from user
-    if text != 'help' and text != 'query':      
+    text = event.message.text # message from user    	    
+    if text == 'help':
+       replymsg = "這是一個報到系統，利用手機的藍牙可以偵測你的身份。使用前必須先到 line://app/1653785431-m94O4qR9 註冊"
+    elif text == 'query':
+        with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
+         load_dict = json.load(f) #讀取json檔案資料變成字典
+        fileobject = open('test.txt', mode = 'w', encoding = "utf-8")
+        for key in load_dict:
+          fileobject.write(key+"  ")	
+          fileobject.write(load_dict[key][0]+"  ")	
+          fileobject.write(load_dict[key][1]+"  ")
+          fileobject.write(load_dict[key][2]+"\n")
+        fileobject.close()
+        replymsg = "資料整理成功"				   
+    elif text == 'clear1234':
+       with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
+         load_dict = json.load(f) #讀取json檔案資料變成字典 
+         for key in load_dict:
+            load_dict[key][1] = "0"
+            load_dict[key][2] = ""
+       with open('userid_name.json', mode = 'w', encoding = "utf-8") as f:
+         json.dump(load_dict, f) #將字典資料寫入json檔案 
+       replymsg = "資料清除成功....."                            
+    else:      
       command = text.split("~", 1)[0]
       name = text.split("~", 1)[1]		  
       print(command)
@@ -61,22 +83,18 @@ def handle_text_message(event):
        try :
          prv_name = load_dict[userId][0]
          load_dict[userId][1] = '0' #修改報到狀態為0(未報到)
+         load_dict[userId][2] = '' #清除報到時間
          notifymsg = prv_name + " 取消報到"         
          lineNotifyMessage(line_token, notifymsg)       
          load_dict[userId][0] = name #修改註冊資料                
          replymsg =  prv_name + " 修改成 " + load_dict[userId][0] + " 資料成功!"; 
        except KeyError:
            load_dict.setdefault(userId, []).append(name)#新增註冊資料          	     
-           load_dict.setdefault(userId, []).append("0")#預設報到狀態0(0:未報到；1:已報到)           
+           load_dict.setdefault(userId, []).append("0")#預設報到狀態0(0:未報到；1:已報到) 
+           load_dict.setdefault(userId, []).append("")#預設報到狀態0(0:未報到；1:已報到)          
            replymsg = load_dict[userId][0] + " 新增註冊資料成功"         
        with open('userid_name.json', mode = 'w', encoding = "utf-8") as f:
-         json.dump(load_dict, f) #將字典資料寫入json檔案 		    
-    elif text == 'help':
-       replymsg = "這是一個報到系統，利用手機的藍牙可以偵測你的身份。使用前必須先到 line://app/1653785431-m94O4qR9 註冊"
-    elif text == 'query':
-       replymsg = "preparing...."		   
-    else:
-       replymsg = "輸入 help"                                 
+         json.dump(load_dict, f) #將字典資料寫入json檔案                                   
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=replymsg)) # reply the same message from user
@@ -84,35 +102,39 @@ def handle_text_message(event):
 @handler.add(BeaconEvent) 
 def handle_beacon_event(event): #處理 beacon偵測事件   
     if event.beacon.hwid == HWId:
-        msg = 'I\'m Line Beacon! HWId = ' + HWId  
+        nowtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        msg = "我是報到系統，恭喜你於 " + nowtime + " 報到成功! HWId = " + HWId  
         userId =  event.source.user_id 
         print("userid...", userId)
         with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
           load_dict = json.load(f)#讀取檔案字串轉成字典物件
           print(load_dict)
           try:
-            print(load_dict[userId][0])
-            newmsg = "Hi, " + load_dict[userId][0] + '. ' + msg
-            checkinState = load_dict[userId][1]
-            nowtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())            
+            print(load_dict[userId][0])            
+            checkinState = load_dict[userId][1]                        
             if checkinState == "0":
               load_dict[userId][1] = "1"              
               notifymsg = load_dict[userId][0] + ' 報到於 ' + nowtime 
-              load_dict.setdefault(userId, []).append(nowtime)            
-              lineNotifyMessage(line_token, notifymsg)                            
+              load_dict[userId][2] = nowtime            
+              lineNotifyMessage(line_token, notifymsg)
+              newmsg = "Hi, " + load_dict[userId][0] + ' ' + msg
+              line_bot_api.reply_message(
+               event.reply_token,
+               TextSendMessage(text=newmsg))                             
             elif checkinState == "1":
-              notifymsg = load_dict[userId][0] + ' 於 ' + nowtime + ' 已經報到過'
+              prv_time = load_dict[userId][2]	
+              notifymsg = load_dict[userId][0] + ' 於 ' + prv_time + ' 已經報到過'
               lineNotifyMessage(line_token, notifymsg)				   	                            
           except KeyError:  
             print("who are you?....")
             newmsg = "Hi,  " + msg + "\n Please connect line://app/1653785431-m94O4qR9 to let me know who you are?" 
-        with open('userid_name.json', mode = 'w', encoding = "utf-8") as f:
-         json.dump(load_dict, f) #將字典資料寫入json檔案 
-         		             
-        line_bot_api.reply_message(
+            line_bot_api.reply_message(
                event.reply_token,
                TextSendMessage(text=newmsg))    
 
+        with open('userid_name.json', mode = 'w', encoding = "utf-8") as f:
+         json.dump(load_dict, f) #將字典資料寫入json檔案         		             
+        
 def lineNotifyMessage(line_token, msg):
       headers = {
           "Authorization": "Bearer " + line_token, 
