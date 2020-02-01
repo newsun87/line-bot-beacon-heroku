@@ -70,7 +70,8 @@ def handle_text_message(event):
           fileobject.write(load_dict[key][2]+"\n")
         fileobject.close()
         replymsg = "資料整理成功"				   
-    elif text == 'clear1234':
+    elif text == 'clear':
+      if userId == "Ubf2b9f4188d45848fb4697d41c962591":		
        with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
          load_dict = json.load(f) #讀取json檔案資料變成字典 
          for key in load_dict:
@@ -78,8 +79,10 @@ def handle_text_message(event):
             load_dict[key][2] = ""
        with open('userid_name.json', mode = 'w', encoding = "utf-8") as f:
          json.dump(load_dict, f) #將字典資料寫入json檔案 
-       replymsg = "資料清除成功....."                            
-    else:      
+       replymsg = "資料清除成功....." 
+      else:
+        replymsg = "權限不夠...."                            
+    elif text.startswith('register'):      
       command = text.split("~", 1)[0]
       name = text.split("~", 1)[1]		  
       print(command)
@@ -100,7 +103,9 @@ def handle_text_message(event):
            load_dict.setdefault(userId, []).append("")#預設報到狀態0(0:未報到；1:已報到)          
            replymsg = load_dict[userId][0] + " 新增註冊資料成功"         
        with open('userid_name.json', mode = 'w', encoding = "utf-8") as f:
-         json.dump(load_dict, f) #將字典資料寫入json檔案                                   
+         json.dump(load_dict, f) #將字典資料寫入json檔案 
+    else:
+      replymsg = "指令不接受...."                                      
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=replymsg)) # reply the same message from user
@@ -153,7 +158,6 @@ def lineNotifyMessage(line_token, msg):
       payload = {'message': msg}
       r = requests.post("https://notify-api.line.me/api/notify", headers = headers, params = payload)
       return r.status_code
-
     
 if __name__ == "__main__":   
 	app.run(debug=True, host='0.0.0.0', port=5000)            
