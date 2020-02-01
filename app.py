@@ -15,8 +15,9 @@ from linebot.models import (
 import json
 import requests
 from flask import render_template
-import datetime
+import datetime as dt
 import time
+import pytz
 
 access_token = '4vOSpHm6ybXdM4H8juFy82HfM2TSUVE3Ty2FLoT+5kjTzNhQdzz1dUfquvRaMCKuqbt/YYXbPj2Kv3W2MKDkxdtZWJZgcC+gKg2RyphLbPF0uaqybQurPvX9sT+eFFY1Qf8z4KuhvqT3tPdr/pX+/wdB04t89/1O/w1cDnyilFU='
 channel_secret = '17af62e5969376a42034ad93f6bf9efe'
@@ -109,7 +110,11 @@ def handle_text_message(event):
 @handler.add(BeaconEvent) 
 def handle_beacon_event(event): #處理 beacon偵測事件   
     if event.beacon.hwid == HWId:
-        nowtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        tw = pytz.timezone('Asia/Taipei')#設定台灣時區        
+        nowdatetime = dt.datetime.now() #現在時間
+        nowtime = tw.localize(nowdatetime)#台灣時區的現在時間
+        nowtime = nowtime.strftime('%Y-%m-%d  %H:%M:%S')#輸出指定時間格式        
+        #nowtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         msg = "我是報到系統，恭喜你於 " + nowtime + " 報到成功! HWId = " + HWId  
         userId =  event.source.user_id 
         print("userid...", userId)
