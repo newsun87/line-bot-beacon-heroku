@@ -30,6 +30,13 @@ HWId = "013874c8c8"
 @app.route('/')
 def showPage():
   return render_template('index.html')
+  
+@app.route("/queryJson", methods=['GET', 'POST']) 
+def queryJson():
+   with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
+     load_dict = json.load(f) #讀取json檔案字串資料變成字典	
+   json_str = json.dumps(load_dict) #把字典轉成json字串  
+   return json_str, 200, {"Content-Type": "application/json"}
 
 @app.route("/callback", methods=['POST'])
 def callback():
