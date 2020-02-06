@@ -14,6 +14,11 @@ from flask import render_template
 import datetime as dt
 import time
 import pytz
+import smtplib
+from email.mime.multipart import MIMEMultipart #email內容載體
+from email.mime.text import MIMEText #用於製作文字內文
+from email.mime.base import MIMEBase #用於承載附檔
+from email import encoders #用於附檔編碼
 
 access_token = '4vOSpHm6ybXdM4H8juFy82HfM2TSUVE3Ty2FLoT+5kjTzNhQdzz1dUfquvRaMCKuqbt/YYXbPj2Kv3W2MKDkxdtZWJZgcC+gKg2RyphLbPF0uaqybQurPvX9sT+eFFY1Qf8z4KuhvqT3tPdr/pX+/wdB04t89/1O/w1cDnyilFU='
 channel_secret = '17af62e5969376a42034ad93f6bf9efe'
@@ -57,17 +62,24 @@ def handle_text_message(event):
     text = event.message.text # message from user    	    
     if text == 'help':
        replymsg = "這是一個報到系統，利用手機的藍牙可以偵測你的身份。使用前必須先到 line://app/1653785431-m94O4qR9 註冊"
-    elif text == 'query':
+    elif text == 'export':
         with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
          load_dict = json.load(f) #讀取json檔案資料變成字典
-        fileobject = open('test.txt', mode = 'w', encoding = "utf-8")
+        fileobject = open('export.txt', mode = 'w', encoding = "utf-8")
+        nowtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        fileobject.write("匯入時間： " + nowtime +"\n")
         for key in load_dict:
           fileobject.write(key+"  ")	
           fileobject.write(load_dict[key][0]+"  ")	
           fileobject.write(load_dict[key][1]+"  ")
           fileobject.write(load_dict[key][2]+"\n")
-        fileobject.close()
-        replymsg = "資料整理成功"				   
+        fileobject.close()        
+        ret = mail()
+        if ret:        
+          replymsg = "資料已寄指定信箱...."
+        else: 
+          replymsg = "資料寄送失敗...."        
+          				   
     elif text == 'clear':
       if userId == "Ubf2b9f4188d45848fb4697d41c962591":		
        with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
@@ -114,8 +126,7 @@ def handle_beacon_event(event): #處理 beacon偵測事件
         tw = pytz.timezone('Asia/Taipei')#設定台灣時區        
         nowdatetime = dt.datetime.now() #現在時間
         nowtime = tw.localize(nowdatetime)#台灣時區的現在時間
-        nowtime = nowtime.strftime('%Y-%m-%d  %H:%M:%S')#輸出指定時間格式        
-        #nowtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        nowtime = nowtime.strftime('%Y-%m-%d  %H:%M:%S')#輸出指定時間格式       
         msg = "我是報到系統，恭喜你於 " + nowtime + " 報到成功! HWId = " + HWId  
         userId =  event.source.user_id 
         print("userid...", userId)
@@ -156,6 +167,39 @@ def lineNotifyMessage(line_token, msg):
       payload = {'message': msg}
       r = requests.post("https://notify-api.line.me/api/notify", headers = headers, params = payload)
       return r.status_code
+      
+def mail(): 
+    ret=True
+    # Account infomation load
+    account = json.load(open('Account.json', 'r', encoding='utf-8'))
+    gmailUser = account['Account']
+    gmailPasswd = account['password']    
+
+    from_address = 'newsun87@mail.sju.edu.tw' #送件者位址
+    to_address = 'newsun87@mail.sju.edu.tw'#收件者位址
+    try:  
+      mail = MIMEMultipart()
+      mail.attach(MIMEText('報到資料清單'))
+      attachments = ['export.txt']
+      for file in attachments:
+          with open(file, 'rb') as fp:
+            add_file = MIMEBase('application', "octet-stream")
+            add_file.set_payload(fp.read())
+          encoders.encode_base64(add_file)
+          add_file.add_header('Content-Disposition', 'attachment', filename=file)
+          mail.attach(add_file)         
+      mail['From']= gmailUser #括號里的對應發件人郵箱暱稱、發件人郵箱帳號 
+      mail['To']= gmailUser #括號里的對應收件人郵箱暱稱、收件人郵箱帳號
+      mail['Subject']="報到資料清單" #郵件的主題，也可以說是標題            
+      smtp = smtplib.SMTP('smtp.gmail.com', 587) #發件人郵箱中的SMTP伺服器      
+      smtp.starttls() 
+      smtp.ehlo()            
+      smtp.login(from_address, "S26202963") #括號中對應的是發件人郵箱帳號、郵箱密碼
+      smtp.sendmail(from_address, to_address, mail.as_string()) #括號中對應的是發件人郵箱帳號、收件人郵箱帳號、發送郵件      
+      smtp.quit #這句是關閉連接的意思 
+    except Exception: #如果try中的語句沒有執行，則會執行下面的ret=False
+      ret=False
+    return ret
     
 if __name__ == "__main__":   
 	app.run(debug=True, host='0.0.0.0', port=5000)            

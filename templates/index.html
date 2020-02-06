@@ -109,6 +109,26 @@
                         liff.closeWindow();
                     })                
             });
+            $('#ButtonExport').click(function () {
+				 if ($("#email").val() == ""){
+					 alert("信箱欄位不得空白");
+				 }
+				 else if ($("#email").val()!= "12345678") {
+					  alert("密碼欄輸入錯誤，重新輸入...");
+				 }				 
+				 else{								
+                  liff.sendMessages([
+                    {
+                        type: 'text',
+                        text: 'export'                        
+                    }
+                  ])
+                    .then(() => {
+                        liff.closeWindow();
+                    }) 
+				}               
+            });
+		
              $('#ButtonClear').click(function () {
 				 if ($("#clrpwd").val() == ""){
 					 alert("密碼欄位不得空白");
@@ -137,7 +157,7 @@
 					  alert("密碼欄輸入錯誤，重新輸入...");
 				 }	
 				 else {            
-               $.ajax({
+               $.ajax({ //取得報到資料json資料字串
                  url: "/queryJson",
                  type: "POST",
                  dataType: "text",
@@ -170,23 +190,27 @@
     </script>
 </head>
 <body>
-    <div class="row">
-		
+    <div class="row">		
         <div id="MainDiv" class="col-md-6" style="margin:5px">			
 			 <img src="static/id.png" width="32" height="32"> 
             <input type="text" id="msg" maxlength="15"/>
             <button class="btn btn-primary" id="ButtonSendMsg">註冊</button>          
-             <img src="static/keyword.png" width="32" height="32">              <input type="password" id="password" maxlength="10"/>
+             <img src="static/keyword.png" width="32" height="32"> 
+             <input type="password" id="password" maxlength="10"/>
             <button class="btn btn-primary" id="ButtonQuery">查詢</button> 
-            <img src="static/keyword.png" width="32" height="32">              <input type="password" id="clrpwd" maxlength="10"/>
+             <img src="static/keyword.png" width="32" height="32">
+            <Input Type="Text" Name="email" id="email" MaxLength="20">            
+            <button class="btn btn-primary" id="ButtonExport">彙整</button>
+            <img src="static/keyword.png" width="32" height="32">
+            <input type="password" id="clrpwd" maxlength="10"/>
             <button class="btn btn-primary" id="ButtonClear">清除</button>
+           
             <hr /> 
             <img src="static/hand.png" width="32" height="32">             			
             <button class="btn btn-primary" id="ButtonGetContext">Get Context</button>
             <button class="btn btn-primary" id="ButtonScan">掃描 QR Code</button>
             <button class="btn btn-primary" id="ButtonGetProfile">Get User Profile</button> 
-            <button class="btn btn-primary" id="ButtonGetHelp">求助</button><br>
-            
+            <button class="btn btn-primary" id="ButtonGetHelp">求助</button><br>            
            
             <table id="JSON_table"></table> 
             <hr />                
