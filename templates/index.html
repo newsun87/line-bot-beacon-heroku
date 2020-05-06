@@ -10,15 +10,15 @@
           href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
-    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>    
    <style>
        #MainDiv button {
            margin:3px;
        }
    </style>
-    <script>
+    <script>    
         //你的liff app ID, 例如 --> 0000000000-spPeRmAn
-        var YourLiffAppId = '1653785431-m94O4qR9';        
+        var YourLiffAppId = '1653785431-m94O4qR9'     
 
         $(document).ready(function () {
             //init LIFF
@@ -40,7 +40,7 @@
         
         function initializeApp(){
 			if (!liff.isLoggedIn()) { // 如果Line用戶沒有登入，就必須事先登入
-        // set `redirectUri` to redirect the user to a URL other than the front page of your LIFF app.
+        
 				liff.login();
             }        
 			const context = liff.getContext(); //取得環境物件
@@ -109,6 +109,7 @@
                         liff.closeWindow();
                     })                
             });
+            
             $('#ButtonExport').click(function () {
 				 if ($("#email").val() == ""){
 					 alert("信箱欄位不得空白");
@@ -129,7 +130,7 @@
 				}               
             });
 		
-             $('#ButtonClear').click(function () {
+             $('#ButtonClear').click(function (){
 				 if ($("#clrpwd").val() == ""){
 					 alert("密碼欄位不得空白");
 				 } 
@@ -161,32 +162,27 @@
                  url: "/queryJson",
                  type: "POST",
                  dataType: "text",
-                 success: function(JData) {
-					 var rowNum = document.getElementById("JSON_table").rows.length;
-					 for (i=1; i<=rowNum; i++){ //刪除表格元件
-					    $("#JSON_table").deleteRow(-1);
-					 }
-                   JsonOBJ = JSON.parse(JData); //將JData的json字串轉成物件                  
-                   $("#JSON_table").append("<tr>" +
-                            "<td>" + "報到名字   " + "</td>" +                            
-                            "<td>" + "   報到時間" + "</td>" +                            
-                            "</tr>");                                              
-                   for(key in JsonOBJ){
-					 if (JsonOBJ[key][1]== '1'){					   	   
-                       $("#JSON_table").append("<tr>" +
-                            "<td>" + JsonOBJ[key][0]   + "</td>" +                            
-                            "<td>" + JsonOBJ[key][2] + "</td>" +
-                            "</tr>");    
-                     }
-			       }               
-                 },  
+                 success: function(JData){					
+				   var NewArray = JData.split("\n");
+				   $("#JSON_table").append("<tr>" +
+                     "<td>" + "報到名字   " + "</td>" +                            
+                     "<td>" + "   報到時間" + "</td>" +                            
+                     "</tr>");        
+				   for(item in NewArray){
+					   JsonOBJ = JSON.parse(NewArray[item])
+					 $("#JSON_table").append("<tr>" +
+                         "<td>" + JsonOBJ["name"] + "</td>" +                            
+                         "<td>" + '  ' + JsonOBJ["datetime"] + "</td>" +
+                         "</tr>");  						 					
+                 }
+			 },  
                   error: function() {
                     alert("ERROR!!!");
                   } 
                });
-            }
-		});       
-      }            
+		  }        
+      });
+  }            
     </script>
 </head>
 <body>

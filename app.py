@@ -19,6 +19,15 @@ from email.mime.multipart import MIMEMultipart #email內容載體
 from email.mime.text import MIMEText #用於製作文字內文
 from email.mime.base import MIMEBase #用於承載附檔
 from email import encoders #用於附檔編碼
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import db
+
+#取得通行憑證
+cred = credentials.Certificate("/home/newsun87/linebot_firebase/serviceAccount.json")
+firebase_admin.initialize_app(cred, {
+    'databaseURL' : 'https://line-bot-test-77a80.firebaseio.com/'
+})
 
 access_token = '4vOSpHm6ybXdM4H8juFy82HfM2TSUVE3Ty2FLoT+5kjTzNhQdzz1dUfquvRaMCKuqbt/YYXbPj2Kv3W2MKDkxdtZWJZgcC+gKg2RyphLbPF0uaqybQurPvX9sT+eFFY1Qf8z4KuhvqT3tPdr/pX+/wdB04t89/1O/w1cDnyilFU='
 channel_secret = '17af62e5969376a42034ad93f6bf9efe'
@@ -35,10 +44,16 @@ def showPage():
   
 @app.route("/queryJson", methods=['GET', 'POST']) 
 def queryJson():
-   with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
-     load_dict = json.load(f) #讀取json檔案字串資料變成字典	
-   json_str = json.dumps(load_dict) #把字典轉成json字串  
-   return json_str, 200, {"Content-Type": "application/json"}
+    json_str = ''
+    ref = db.reference('/') # 參考路徑
+    users_ref = ref.child('linebot_beacon/').get()
+    print("Hi")
+    for userId in users_ref:
+      users_userId_ref = ref.child('linebot_beacon/'+ userId)		   
+      if users_userId_ref.get()['state'] == '1':
+       json_str = json_str + json.dumps(users_userId_ref.get()) +'\n'
+       print(json_str)  
+    return json_str, 200, {"Content-Type": "application/json"}
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -59,9 +74,23 @@ def callback():
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):    
     userId = event.source.user_id
-    text = event.message.text # message from user    	    
+    text = event.message.text # message from user 
+    ref = db.reference('/') # 參考路徑   	    
     if text == 'help':
        replymsg = "這是一個報到系統，利用手機的藍牙可以偵測你的身份。使用前必須先到 line://app/1653785431-m94O4qR9 註冊"
+    elif text == 'query':
+        users_userId_ref = ref.child('linebot_beacon/'+ userId)
+        if users_userId_ref.get()== None: # 新用戶            
+            replymsg = "你尚未註冊喔!"	
+        elif users_userId_ref.get()['state'] == '0': 
+            name = users_userId_ref.get()['name']            
+            replymsg = "用戶" + name + " 尚未報到!"
+        elif users_userId_ref.get()['state'] == '1': 
+            name = users_userId_ref.get()['name']                        
+            replymsg = "用戶" + name + " 已經報到!"    
+            	
+		
+		   
     elif text == 'export':
         with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
          load_dict = json.load(f) #讀取json檔案資料變成字典
@@ -79,41 +108,39 @@ def handle_text_message(event):
           replymsg = "資料已寄指定信箱...."
         else: 
           replymsg = "資料寄送失敗...."        
-          				   
-    elif text == 'clear':
-      if userId == "Ubf2b9f4188d45848fb4697d41c962591":		
-       with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
-         load_dict = json.load(f) #讀取json檔案資料變成字典 
-         for key in load_dict:
-            load_dict[key][1] = "0"
-            load_dict[key][2] = ""
-       with open('userid_name.json', mode = 'w', encoding = "utf-8") as f:
-         json.dump(load_dict, f) #將字典資料寫入json檔案 
-       replymsg = "資料清除成功....." 
-      else:
-        replymsg = "權限不夠...."                            
     elif text.startswith('register'):      
       command = text.split("~", 1)[0]
       name = text.split("~", 1)[1]		  
       print(command)
-      if (command == 'register'):
-       with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
-         load_dict = json.load(f) #讀取json檔案資料變成字典
-       try :
-         prv_name = load_dict[userId][0]
-         load_dict[userId][1] = '0' #修改報到狀態為0(未報到)
-         load_dict[userId][2] = '' #清除報到時間
-         notifymsg = prv_name + " 取消報到"         
-         lineNotifyMessage(line_token, notifymsg)       
-         load_dict[userId][0] = name #修改註冊資料                
-         replymsg =  prv_name + " 修改成 " + load_dict[userId][0] + " 資料成功!"; 
-       except KeyError:
-           load_dict.setdefault(userId, []).append(name)#新增註冊資料          	     
-           load_dict.setdefault(userId, []).append("0")#預設報到狀態0(0:未報到；1:已報到) 
-           load_dict.setdefault(userId, []).append("")#預設報到狀態0(0:未報到；1:已報到)          
-           replymsg = load_dict[userId][0] + " 新增註冊資料成功"         
-       with open('userid_name.json', mode = 'w', encoding = "utf-8") as f:
-         json.dump(load_dict, f) #將字典資料寫入json檔案 
+      if (command == 'register'):          
+          users_ref = ref.child('linebot_beacon/'+ userId)
+          print(users_ref.get())
+          username = name
+          state = '0'
+          datetime = ''
+          user_data = {"name":username, "state":state, "datetime":datetime}
+          users_ref = ref.child('linebot_beacon/'+ userId)
+          if users_ref.get()== None: # 新用戶            
+            users_ref.set(user_data) # 增加資料
+            print("儲存完畢", user_data)
+            replymsg = "用戶" + name + " 新增註冊資料成功"
+          else:
+            users_ref.set(user_data) # 增加資料
+            print("資料修改完畢", user_data)
+            replymsg = "用戶" + name + " 修改資料成功"			  
+          				   
+    elif text == 'clear':
+      if userId == "Ubf2b9f4188d45848fb4697d41c962591":		
+       users_ref = ref.child('linebot_beacon/').get()
+       for userid in users_ref:
+         ref.child('linebot_beacon/' + userid).update({
+		    'state': '0',
+			'datetime':''
+		   })
+       replymsg = " 資料清除成功....." 
+      else:
+        replymsg = "無管理權限...."                            
+   
     else:
       replymsg = "指令不接受...."                                      
     line_bot_api.reply_message(
@@ -121,44 +148,42 @@ def handle_text_message(event):
         TextSendMessage(text=replymsg)) # reply the same message from user
         
 @handler.add(BeaconEvent) 
-def handle_beacon_event(event): #處理 beacon偵測事件   
-    if event.beacon.hwid == HWId:
-        tw = pytz.timezone('Asia/Taipei')#設定台灣時區        
-        nowdatetime = dt.datetime.now() #現在時間
-        nowtime = tw.localize(nowdatetime)#台灣時區的現在時間
-        nowtime = nowtime.strftime('%Y-%m-%d  %H:%M:%S')#輸出指定時間格式       
-        msg = "我是報到系統，恭喜你於 " + nowtime + " 報到成功! HWId = " + HWId  
-        userId =  event.source.user_id 
-        print("userid...", userId)
-        with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
-          load_dict = json.load(f)#讀取檔案字串轉成字典物件
-          print(load_dict)
-          try:
-            print(load_dict[userId][0])            
-            checkinState = load_dict[userId][1]                        
-            if checkinState == "0":
-              load_dict[userId][1] = "1"              
-              notifymsg = load_dict[userId][0] + ' 報到於 ' + nowtime 
-              load_dict[userId][2] = nowtime            
-              lineNotifyMessage(line_token, notifymsg)
-              newmsg = "Hi, " + load_dict[userId][0] + ' ' + msg
-              line_bot_api.reply_message(
-               event.reply_token,
-               TextSendMessage(text=newmsg))                             
-            elif checkinState == "1":
-              prv_time = load_dict[userId][2]	
-              notifymsg = load_dict[userId][0] + ' 於 ' + prv_time + ' 已經報到過'
-              lineNotifyMessage(line_token, notifymsg)				   	                            
-          except KeyError:  
-            print("who are you?....")
-            newmsg = "Hi,  " + msg + "\n Please connect line://app/1653785431-m94O4qR9 to let me know who you are?" 
-            line_bot_api.reply_message(
-               event.reply_token,
-               TextSendMessage(text=newmsg))    
-
-        with open('userid_name.json', mode = 'w', encoding = "utf-8") as f:
-         json.dump(load_dict, f) #將字典資料寫入json檔案         		             
-        
+def handle_beacon_event(event): #處理 beacon偵測事件
+    ref = db.reference('/') # 參考路徑   	 
+    userId =  event.source.user_id 
+    users_ref = ref.child('linebot_beacon/'+ userId)
+    if event.beacon.hwid == HWId:		
+      if users_ref.get() == None:
+       msg = "Hi, 我是報到系統，要先去註冊才可以報到喔..." 
+       print("你是誰?....")
+       newmsg = msg + "\n 請連線 line://app/1653785431-m94O4qR9 去註冊" 
+       line_bot_api.reply_message(event.reply_token,
+               TextSendMessage(text=newmsg))   
+      else:					
+         tw = pytz.timezone('Asia/Taipei')#設定台灣時區        
+         nowdatetime = dt.datetime.now() #現在時間
+         nowtime = tw.localize(nowdatetime)#台灣時區的現在時間
+         nowtime = nowtime.strftime('%Y-%m-%d  %H:%M:%S')#輸出指定時間格式                 
+         print("userid...", userId)
+         name = users_ref.get()["name"]
+         checkState = users_ref.get()["state"]
+         print('checkState', checkState)
+         
+         if checkState == "0": # 修改報到狀態
+           users_ref.update({
+		 	   "state":"1",
+		 	   "datetime":nowtime
+		   })           
+           newmsg = "我是報到系統，恭喜 " + name +' 於 ' + nowtime + " 報到成功! HWId = " + HWId            
+           notifymsg = users_ref.get()["name"] + ' 報到於 ' + nowtime 
+           lineNotifyMessage(line_token, notifymsg)
+           line_bot_api.reply_message(event.reply_token,\
+               TextSendMessage(text = newmsg))
+         elif checkState == "1": # 不修改報到資料
+           prv_time = users_ref.get()["datetime"]	
+           notifymsg = users_ref.get()["name"] + ' 於 ' + prv_time + ' 已經報到過'
+           lineNotifyMessage(line_token, notifymsg)	      
+                		             
 def lineNotifyMessage(line_token, msg):
       headers = {
           "Authorization": "Bearer " + line_token, 
