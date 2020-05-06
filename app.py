@@ -24,7 +24,7 @@ from firebase_admin import credentials
 from firebase_admin import db
 
 #取得通行憑證
-cred = credentials.Certificate("/home/newsun87/linebot_firebase/serviceAccount.json")
+cred = credentials.Certificate("serviceAccount.json")
 firebase_admin.initialize_app(cred, {
     'databaseURL' : 'https://line-bot-test-77a80.firebaseio.com/'
 })
