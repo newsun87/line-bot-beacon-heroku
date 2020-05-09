@@ -83,13 +83,19 @@
             });
              //ButtonSendMsg
             $('#ButtonSendMsg').click(function () {	
+				if ($('#picurl').val()==""){
+				  var picurl= "https://i.imgur.com/6c9QOyC.png"
+				}
+				else {
+					var picurl = $('#picurl').val()
+			    }		
 				if ($('#msg').val()!=""){			
                   liff.sendMessages([
                     {
                         type: 'text',
-                        text: 'register~' + $('#msg').val()                        
+                        text: 'register~' + $('#msg').val() + '~' + picurl                        
                     }
-                  ])
+                  ]) 
                     .then(() => {
                         liff.closeWindow();
                     })
@@ -188,9 +194,11 @@
 <body>
     <div class="row">		
         <div id="MainDiv" class="col-md-6" style="margin:5px">			
-			 <img src="static/id.png" width="32" height="32"> 
-            <input type="text" id="msg" maxlength="15"/>
-            <button class="btn btn-primary" id="ButtonSendMsg">註冊</button>          
+			 <img src="static/username.png" width="32" height="32"> 
+            <input type="text" id="msg" maxlength="15" placeholder="請輸入你自取的帳號" /><br>
+             <img src="static/pic.png" width="32" height="32"> 
+            <input type="url" id="picurl" maxlength="20" value="https://i.imgur.com/0QMLaeO.png" placeholder="請輸入個人圖片的網址"/>
+            <button class="btn btn-primary" id="ButtonSendMsg">註冊</button><br>                      
              <img src="static/keyword.png" width="32" height="32"> 
              <input type="password" id="password" maxlength="10"/>
             <button class="btn btn-primary" id="ButtonQuery">查詢</button> 
