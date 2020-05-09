@@ -187,7 +187,8 @@ def handle_beacon_event(event): #處理 beacon偵測事件
          nowtime = tw.localize(nowdatetime)#台灣時區的現在時間
          nowtime = nowtime.strftime('%Y-%m-%d  %H:%M:%S')#輸出指定時間格式                 
          print("userid...", userId)
-         name = users_userId_ref.get()["name"]         
+         name = users_userId_ref.get()["name"]  
+         picurl = users_userId_ref.get()["picurl"]       
          checkState = users_userId_ref.get()["state"]
          print('checkState', checkState)
          
@@ -197,13 +198,14 @@ def handle_beacon_event(event): #處理 beacon偵測事件
 		 	   "datetime":nowtime
 		   })           
            newmsg = "我是報到系統，恭喜 " + name +' 於 ' + nowtime + " 報到成功! HWId = " + HWId            
-           notifymsg = users_userId_ref.get()["name"] + ' 報到於 ' + nowtime 
+           notifymsg = users_userId_ref.get()["name"] + ' 報到於 ' + nowtime +'\n' + picurl
            lineNotifyMessage(line_token, notifymsg)
            line_bot_api.reply_message(event.reply_token,\
                TextSendMessage(text = newmsg))
          elif checkState == "1": # 不修改報到資料
            prv_time = users_userId_ref.get()["datetime"]	
-           notifymsg = users_userId_ref.get()["name"] + ' 於 ' + prv_time + ' 已經報到過'
+           notifymsg = users_userId_ref.get()["name"] + ' 於 ' + prv_time + ' 已經報到過' \
+           +'\n' + picurl
            lineNotifyMessage(line_token, notifymsg)	      
                 		             
 def lineNotifyMessage(line_token, msg):
