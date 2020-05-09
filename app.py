@@ -107,7 +107,7 @@ def handle_text_message(event):
 		   
     if text == 'help':
        replymsg = TextSendMessage(text="這是一個報到系統，利用手機的藍牙可以偵測你的身份。\
-                   使用前必須先到 line://app/1653785431-m94O4qR9 註冊")	
+       使用前必須先到 line://app/1653785431-m94O4qR9 註冊")	
     elif text == 'export':
         with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
          load_dict = json.load(f) #讀取json檔案資料變成字典
@@ -187,7 +187,7 @@ def handle_beacon_event(event): #處理 beacon偵測事件
          nowtime = tw.localize(nowdatetime)#台灣時區的現在時間
          nowtime = nowtime.strftime('%Y-%m-%d  %H:%M:%S')#輸出指定時間格式                 
          print("userid...", userId)
-         name = users_userId_ref.get()["name"]
+         name = users_userId_ref.get()["name"]         
          checkState = users_userId_ref.get()["state"]
          print('checkState', checkState)
          
@@ -211,8 +211,9 @@ def lineNotifyMessage(line_token, msg):
           "Authorization": "Bearer " + line_token, 
           "Content-Type" : "application/x-www-form-urlencoded"
       }
-      payload = {'message': msg}
-      r = requests.post("https://notify-api.line.me/api/notify", headers = headers, params = payload)
+      payload = {'message': msg}      
+      r = requests.post("https://notify-api.line.me/api/notify", \
+          headers = headers, params = payload)
       return r.status_code
       
 def mail(): 
