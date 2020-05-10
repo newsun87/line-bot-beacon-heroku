@@ -8,6 +8,9 @@ from linebot.exceptions import (
 )
 #from linebot.models import (TemplateSendMessage, MessageEvent, TextMessage, TextSendMessage, BeaconEvent)
 from linebot.models import *
+import requests
+import base64
+
 
 import json
 import requests
@@ -70,7 +73,28 @@ def callback():
     except InvalidSignatureError:
         abort(400)
     return 'OK'
-
+    
+@handler.add(MessageEvent, message=ImageMessage)
+def handle_image_message(event):  
+	if event.message.type == 'image':
+	  message_id = event.message.id
+	  print("event: ", event)	  
+	  # 讀取圖片資料
+	  message_content = line_bot_api.get_message_content(message_id)
+    
+	  with open('temp_image.jpg', 'wb') as fd:
+		  for chunk in message_content.iter_content():
+			  fd.write(chunk)
+			  
+	  userId = event.source.user_id
+	  ref = db.reference('/') # 參考路徑	
+	  users_userId_ref = ref.child('linebot_beacon/'+ userId)	  	  
+	  imgurl = imgur_upload('temp_image.jpg')
+	  users_userId_ref.update({
+		    'picurl': imgurl })	
+	  message = TextSendMessage(text='相片更新成功')	    
+	  line_bot_api.reply_message(event.reply_token, message)  	      	
+	  
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):    
     userId = event.source.user_id
@@ -124,7 +148,8 @@ def handle_text_message(event):
         if ret:        
           replymsg = "資料已寄指定信箱...."
         else: 
-          replymsg = "資料寄送失敗...."        
+          replymsg = "資料寄送失敗...." 
+                 
     elif text.startswith('register'): 
       split_array = text.split("~")
       split_num = len(split_array)
@@ -155,18 +180,16 @@ def handle_text_message(event):
     elif text == 'clear':
       if userId == "Ubf2b9f4188d45848fb4697d41c962591":	
        users_userId_ref = ref.child('linebot_beacon/' + userid)	  	
-       users_ref = ref.child('linebot_beacon/').get()
-       for userid in users_ref:
+       users_ref_list = ref.child('linebot_beacon/').get()
+       for userid in users_ref_list:
          users_userId_ref.update({
 		    'state': '0',
 			'datetime':''
 		 })
        replymsg = TextSendMessage(text=" 資料清除成功....." )
       else:
-        replymsg = TextSendMessage(text=" 無管理權限....")                           
-   
-    else:
-      replymsg = TextSendMessage(text=" 指令不接受...." )                                      
+        replymsg = TextSendMessage(text=" 無管理權限....")   
+                                         
     line_bot_api.reply_message(event.reply_token,replymsg ) # reply the same message from user
         
 @handler.add(BeaconEvent) 
@@ -208,6 +231,22 @@ def handle_beacon_event(event): #處理 beacon偵測事件
            +'\n' + picurl
            lineNotifyMessage(line_token, notifymsg)	      
                 		             
+def imgur_upload(image):
+   client_id = '25f4ae85bbaac00'
+   client_secret = 'bb4c2d5ec7e6a441ea22917c8c5aa3c7b0de6c23'
+
+   headers = {
+    'Authorization': 'Client-ID ' + client_id}
+   params = {'image': base64.b64encode(open(image, 'rb').read())}
+
+   r = requests.post(f'https://api.imgur.com/3/image', \
+     headers=headers, data=params)
+   print('status:', r.status_code)
+   data = r.json() # 轉成 json 格式
+   #print(data)
+   print(data['data']['link'])
+   return data['data']['link']
+
 def lineNotifyMessage(line_token, msg):
       headers = {
           "Authorization": "Bearer " + line_token, 
