@@ -133,22 +133,22 @@ def handle_text_message(event):
        replymsg = TextSendMessage(text="這是一個報到系統，利用手機的藍牙可以偵測你的身份。\
        使用前必須先到 line://app/1653785431-m94O4qR9 註冊")	
     elif text == 'export':
-        with open('userid_name.json', mode = 'r', encoding = "utf-8") as f:
-         load_dict = json.load(f) #讀取json檔案資料變成字典
+        ref = db.reference('/') # 參考路徑
+        users_ref_list = ref.child('linebot_beacon/').get()          
         fileobject = open('export.txt', mode = 'w', encoding = "utf-8")
         nowtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         fileobject.write("匯入時間： " + nowtime +"\n")
-        for key in load_dict:
-          fileobject.write(key+"  ")	
-          fileobject.write(load_dict[key][0]+"  ")	
-          fileobject.write(load_dict[key][1]+"  ")
-          fileobject.write(load_dict[key][2]+"\n")
+        for userId in users_ref_list:
+          users_userId_ref = ref.child('linebot_beacon/'+ userId)		   
+          if users_userId_ref.get()['state'] == '1':			  
+            fileobject.write(users_userId_ref.get()['name']+"   ")	
+            fileobject.write(users_userId_ref.get()['datetime']+"\n")          
         fileobject.close()        
         ret = mail()
         if ret:        
-          replymsg = "資料已寄指定信箱...."
+          replymsg =  TextSendMessage(text= "資料已寄指定信箱....")	
         else: 
-          replymsg = "資料寄送失敗...." 
+          replymsg = TextSendMessage(text= "資料寄送失敗....")	
                  
     elif text.startswith('register'): 
       split_array = text.split("~")
@@ -262,28 +262,29 @@ def mail():
     # Account infomation load
     account = json.load(open('Account.json', 'r', encoding='utf-8'))
     gmailUser = account['Account']
-    gmailPasswd = account['password']    
-
+    gmailPasswd = account['password']
     from_address = 'newsun87@mail.sju.edu.tw' #送件者位址
     to_address = 'newsun87@mail.sju.edu.tw'#收件者位址
     try:  
       mail = MIMEMultipart()
       mail.attach(MIMEText('報到資料清單'))
       attachments = ['export.txt']
+      print('pass1....')
       for file in attachments:
           with open(file, 'rb') as fp:
             add_file = MIMEBase('application', "octet-stream")
             add_file.set_payload(fp.read())
           encoders.encode_base64(add_file)
           add_file.add_header('Content-Disposition', 'attachment', filename=file)
-          mail.attach(add_file)         
+          mail.attach(add_file)  
+      print('pass2....')       
       mail['From']= gmailUser #括號里的對應發件人郵箱暱稱、發件人郵箱帳號 
-      mail['To']= gmailUser #括號里的對應收件人郵箱暱稱、收件人郵箱帳號
+      mail['To']= gmailUser #括號裏的對應收件人郵箱暱稱、收件人郵箱帳號
       mail['Subject']="報到資料清單" #郵件的主題，也可以說是標題            
-      smtp = smtplib.SMTP('smtp.gmail.com', 587) #發件人郵箱中的SMTP伺服器      
+      smtp = smtplib.SMTP('smtp.gmail.com', 587) #發件人郵箱中的SMTP伺服器        
       smtp.starttls() 
       smtp.ehlo()            
-      smtp.login(from_address, "S26202963") #括號中對應的是發件人郵箱帳號、郵箱密碼
+      smtp.login(from_address, gmailPasswd) #括號中對應的是發件人郵箱帳號、郵箱密碼
       smtp.sendmail(from_address, to_address, mail.as_string()) #括號中對應的是發件人郵箱帳號、收件人郵箱帳號、發送郵件      
       smtp.quit #這句是關閉連接的意思 
     except Exception: #如果try中的語句沒有執行，則會執行下面的ret=False

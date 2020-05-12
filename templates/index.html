@@ -153,6 +153,7 @@
             });
 		
              $('#ButtonQuery').click(function () {
+				 
 				 if  ($("#password").val() == ""){
 					 alert("密碼欄位不得空白");
 				 } 
@@ -195,26 +196,24 @@
             <button class="btn btn-primary" id="ButtonSendMsg">註冊</button><br>                      
              <img src="static/keyword.png" width="32" height="32"> 
              <input type="password" id="password" maxlength="10"/>
-            <button class="btn btn-primary" id="ButtonQuery">查詢</button> 
+            <button class="btn btn-primary" id="ButtonQuery">查詢</button> <br>
              <img src="static/keyword.png" width="32" height="32">
             <Input Type="Text" Name="email" id="email" MaxLength="20">            
-            <button class="btn btn-primary" id="ButtonExport">彙整</button>
+            <button class="btn btn-primary" id="ButtonExport">彙整</button><br>
             <img src="static/keyword.png" width="32" height="32">
             <input type="password" id="clrpwd" maxlength="10"/>
             <button class="btn btn-primary" id="ButtonClear">清除</button>
-           
+            <table id="JSON_table"></table> 
             <hr /> 
             <img src="static/hand.png" width="32" height="32">             			
             <button class="btn btn-primary" id="ButtonGetContext">Get Context</button>
             <button class="btn btn-primary" id="ButtonScan">掃描 QR Code</button>
             <button class="btn btn-primary" id="ButtonGetProfile">Get User Profile</button> 
             <button class="btn btn-primary" id="ButtonGetHelp">求助</button><br>            
-           
-            <table id="JSON_table"></table> 
-            <hr />                
-            <label>訊息顯示</label>
+           <label>訊息顯示</label>
             <textarea class="form-control" rows="5" type="text" id="field_info"></textarea>   <br />           
             <hr />
+           
         </div>
     </div>
 </body>
