@@ -151,13 +151,24 @@
                     }) 
 				}               
             });
+            $('#ButtonExit').click(function (){
+				 liff.sendMessages([
+                    {
+                        type: 'text',
+                        text: 'exit'                        
+                    }
+                  ])
+                    .then(() => {
+                        liff.closeWindow();
+                    })				               
+            });
 		
              $('#ButtonQuery').click(function () {
 				 
-				 if  ($("#password").val() == ""){
+				 if  ($("#querypwd").val() == ""){
 					 alert("密碼欄位不得空白");
 				 } 
-				 else if ($("#password").val()!= "12345678") {
+				 else if ($("#querypwd").val()!= "12345678") {
 					  alert("密碼欄輸入錯誤，重新輸入...");
 				 }	
 				 else {            
@@ -192,16 +203,18 @@
     <div class="row">		
         <div id="MainDiv" class="col-md-6" style="margin:5px">			
 			 <img src="static/username.png" width="32" height="32"> 
-            <input type="text" id="msg" maxlength="15" placeholder="請輸入你自取的帳號" />         
-            <button class="btn btn-primary" id="ButtonSendMsg">註冊</button><br>                      
+            <input type="text" id="msg" maxlength="15" size="18" placeholder="請輸入你自取的帳號" />         
+            <button class="btn btn-primary" id="ButtonSendMsg">註冊</button><br> 
+            <img src="static/exit.png" width="32" height="32">                     
+            <button class="btn btn-primary" id="ButtonExit">退出</button><br>                      
              <img src="static/keyword.png" width="32" height="32"> 
-             <input type="password" id="password" maxlength="10"/>
-            <button class="btn btn-primary" id="ButtonQuery">查詢</button> <br>
+             <input type="password" id="querypwd" maxlength="10" size="18" placeholder="請輸入管理者密碼"/>
+            <button class="btn btn-primary" id="ButtonQuery" >報到查詢</button> <br>
              <img src="static/keyword.png" width="32" height="32">
-            <Input Type="Text" Name="email" id="email" MaxLength="20">            
-            <button class="btn btn-primary" id="ButtonExport">彙整</button><br>
+            <Input type="text" Name="email" id="email" MaxLength="20" size="18" placeholder="請輸入管理者密碼">            
+            <button class="btn btn-primary" id="ButtonExport" >彙整</button><br>
             <img src="static/keyword.png" width="32" height="32">
-            <input type="password" id="clrpwd" maxlength="10"/>
+            <input type="password" id="clrpwd" maxlength="10" size="18" placeholder="請輸入管理者密碼"/>
             <button class="btn btn-primary" id="ButtonClear">清除</button>
             <table id="JSON_table"></table> 
             <hr /> 

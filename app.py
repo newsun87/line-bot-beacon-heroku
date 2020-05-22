@@ -112,8 +112,9 @@ def handle_text_message(event):
             replymsg = "用戶" + name + " 尚未報到!"
         elif users_userId_ref.get()['state'] == '1': 
             name = users_userId_ref.get()['name']
-            picurl = users_userId_ref.get()['picurl']                         
-            replymsg = "用戶" + name + " 已經報到!" 
+            picurl = users_userId_ref.get()['picurl'] 
+            datetime = users_userId_ref.get()['datetime']                         
+            replymsg = "用戶" + name + " 已經報到! \n報到時間：" + datetime 
         buttons_template_message = TemplateSendMessage(
          alt_text = '我是一個按鈕模板',  # 當你發送到你的Line bot 群組的時候，通知的名稱
          template = ButtonsTemplate(
@@ -179,7 +180,7 @@ def handle_text_message(event):
           				   
     elif text == 'clear':
       if userId == "Ubf2b9f4188d45848fb4697d41c962591":	
-       users_userId_ref = ref.child('linebot_beacon/' + userid)	  	
+       users_userId_ref = ref.child('linebot_beacon/' + userId)	  	
        users_ref_list = ref.child('linebot_beacon/').get()
        for userid in users_ref_list:
          users_userId_ref.update({
@@ -188,7 +189,14 @@ def handle_text_message(event):
 		 })
        replymsg = TextSendMessage(text=" 資料清除成功....." )
       else:
-        replymsg = TextSendMessage(text=" 無管理權限....")   
+        replymsg = TextSendMessage(text=" 無管理權限....") 
+    elif text == 'exit':      
+       users_userId_ref = ref.child('linebot_beacon/' + userId)	
+       if users_userId_ref.get == None:
+          replymsg = TextSendMessage(text=" 查無此資料....." ) 
+       else:
+           users_userId_ref.set({})
+           replymsg = TextSendMessage(text=" 註冊資料已移除...." )	      
                                          
     line_bot_api.reply_message(event.reply_token,replymsg ) # reply the same message from user
         
@@ -199,11 +207,23 @@ def handle_beacon_event(event): #處理 beacon偵測事件
     users_userId_ref = ref.child('linebot_beacon/'+ userId)
     if event.beacon.hwid == HWId:		
       if users_userId_ref.get() == None:
-       msg = "Hi, 我是報到系統，要先去註冊才可以報到喔..." 
-       print("你是誰?....")
-       newmsg = msg + "\n 請連線 line://app/1653785431-m94O4qR9 去註冊" 
-       line_bot_api.reply_message(event.reply_token,
-               TextSendMessage(text=newmsg))   
+       replymsg = "Hi, 我是報到系統，我不知道你是誰? \n要記得先去註冊才可以報到喔!" 
+       print("你是誰?....")  
+       picurl = 'https://i.imgur.com/6c9QOyC.png'    
+       buttons_template_message = TemplateSendMessage(
+             alt_text = '我是一個按鈕模板',  # 當你發送到你的Line bot 群組的時候，通知的名稱
+             template = ButtonsTemplate(
+              thumbnail_image_url = picurl, 
+              text = replymsg,  # 你要問的問題，或是文字敘述            
+              actions = [ # action 最多只能4個喔！
+                URIAction(
+                    label = "註冊", # 在按鈕模板上顯示的名稱
+                    uri = "line://app/1653785431-m94O4qR9" # 點擊後，顯示文字！
+                )
+              ]
+             )
+           )         
+       line_bot_api.reply_message(event.reply_token,buttons_template_message)   
       else:					
          tw = pytz.timezone('Asia/Taipei')#設定台灣時區        
          nowdatetime = dt.datetime.now() #現在時間
@@ -219,18 +239,28 @@ def handle_beacon_event(event): #處理 beacon偵測事件
            users_userId_ref.update({
 		 	   "state":"1",
 		 	   "datetime":nowtime
-		   })           
+		   })
+           datetime = users_userId_ref.get()["datetime"]  
+           replymsg = "用戶" + name + " 已經報到! \n報到時間：" + datetime 
+           buttons_template_message = TemplateSendMessage(
+             alt_text = '我是一個按鈕模板',  # 當你發送到你的Line bot 群組的時候，通知的名稱
+             template = ButtonsTemplate(
+              thumbnail_image_url = picurl, 
+              text = replymsg,  # 你要問的問題，或是文字敘述            
+              actions = [ # action 最多只能4個喔！
+                URIAction(
+                    label = "修改設定", # 在按鈕模板上顯示的名稱
+                    uri = "line://app/1653785431-m94O4qR9" # 點擊後，顯示文字！
+                )
+              ]
+             )
+           )         
            newmsg = "我是報到系統，恭喜 " + name +' 於 ' + nowtime + " 報到成功! HWId = " + HWId            
            notifymsg = users_userId_ref.get()["name"] + ' 報到於 ' + nowtime +'\n' + picurl
            lineNotifyMessage(line_token, notifymsg)
-           line_bot_api.reply_message(event.reply_token,\
-               TextSendMessage(text = newmsg))
-         elif checkState == "1": # 不修改報到資料
-           prv_time = users_userId_ref.get()["datetime"]	
-           notifymsg = users_userId_ref.get()["name"] + ' 於 ' + prv_time + ' 已經報到過' \
-           +'\n' + picurl
-           lineNotifyMessage(line_token, notifymsg)	      
+           line_bot_api.reply_message(event.reply_token, buttons_template_message)            
                 		             
+
 def imgur_upload(image):
    client_id = '25f4ae85bbaac00'
    client_secret = 'bb4c2d5ec7e6a441ea22917c8c5aa3c7b0de6c23'
