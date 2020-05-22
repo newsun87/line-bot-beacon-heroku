@@ -180,19 +180,20 @@ def handle_text_message(event):
           				   
     elif text == 'clear':
       if userId == "Ubf2b9f4188d45848fb4697d41c962591":	
-       users_userId_ref = ref.child('linebot_beacon/' + userId)	  	
+       #users_userId_ref = ref.child('linebot_beacon/' + userId)	  	
        users_ref_list = ref.child('linebot_beacon/').get()
        for userid in users_ref_list:
-         users_userId_ref.update({
+         ref.child('linebot_beacon/'+userid).update({
 		    'state': '0',
 			'datetime':''
 		 })
-       replymsg = TextSendMessage(text=" 資料清除成功....." )
+       replymsg = TextSendMessage(text=" 資料全部清除成功....." )
       else:
         replymsg = TextSendMessage(text=" 無管理權限....") 
+        
     elif text == 'exit':      
        users_userId_ref = ref.child('linebot_beacon/' + userId)	
-       if users_userId_ref.get == None:
+       if users_userId_ref.get() == None:
           replymsg = TextSendMessage(text=" 查無此資料....." ) 
        else:
            users_userId_ref.set({})
