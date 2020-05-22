@@ -76,24 +76,29 @@ def callback():
     
 @handler.add(MessageEvent, message=ImageMessage)
 def handle_image_message(event):  
-	if event.message.type == 'image':
-	  message_id = event.message.id
-	  print("event: ", event)	  
+    if event.message.type == 'image':
+      message_id = event.message.id
+      print("event: ", event)	  
 	  # 讀取圖片資料
-	  message_content = line_bot_api.get_message_content(message_id)
-    
-	  with open('temp_image.jpg', 'wb') as fd:
-		  for chunk in message_content.iter_content():
-			  fd.write(chunk)
-			  
-	  userId = event.source.user_id
-	  ref = db.reference('/') # 參考路徑	
-	  users_userId_ref = ref.child('linebot_beacon/'+ userId)	  	  
-	  imgurl = imgur_upload('temp_image.jpg')
-	  users_userId_ref.update({
-		    'picurl': imgurl })	
-	  message = TextSendMessage(text='相片更新成功')	    
-	  line_bot_api.reply_message(event.reply_token, message)  	      	
+      message_content = line_bot_api.get_message_content(message_id)    
+      with open('temp_image.jpg', 'wb') as fd:
+         for chunk in message_content.iter_content():
+            fd.write(chunk)			  
+      userId = event.source.user_id
+      ref = db.reference('/') # 參考路徑	
+      users_userId_ref = ref.child('linebot_beacon/'+ userId)	  	  
+      imgurl = imgur_upload('temp_image.jpg')
+      users_userId_ref.update({
+		'picurl': imgurl })	
+      message = TextSendMessage(text='相片更新成功')
+      checkState = users_userId_ref.get()["state"]
+      if checkState == '1':
+        picurl = users_userId_ref.get()['picurl']
+        datetime = users_userId_ref.get()["datetime"]	
+        notifymsg = users_userId_ref.get()["name"] + ' 報到於 ' + datetime + picurl
+        lineNotifyMessage(line_token, notifymsg)	    
+      line_bot_api.reply_message(event.reply_token, message)
+	      	      	
 	  
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):    
