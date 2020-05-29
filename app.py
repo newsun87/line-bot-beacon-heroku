@@ -301,7 +301,7 @@ def help_menu():
          alt_text = '我是報到系統使用說明按鈕選單模板',
          template = ButtonsTemplate(
             thumbnail_image_url = 'https://i.imgur.com/QNStdTw.png', 
-            title = '雲端音樂功能選單',  # 你的標題名稱
+            title = '功能使用說明選單',  # 你的標題名稱
             text = '請選擇：',  # 你要問的問題，或是文字敘述            
             actions = [ # action 最多只能4個喔！
                 URIAction(
