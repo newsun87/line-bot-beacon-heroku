@@ -42,9 +42,22 @@ app = Flask(__name__)
 line_bot_api = LineBotApi(access_token)
 handler = WebhookHandler(channel_secret)
 HWId = "013874c8c8"
+
 @app.route('/')
 def showPage():
   return render_template('index.html')
+  
+@app.route('/help')
+def showHelpPage():
+  return render_template('help.html')
+
+@app.route('/question')
+def showQuestionPage():
+  return render_template('question.html') 
+  
+@app.route('/goal')
+def showGoalPage():
+  return render_template('goal.html')           
   
 @app.route("/queryJson", methods=['GET', 'POST']) 
 def queryJson():
@@ -136,8 +149,8 @@ def handle_text_message(event):
         line_bot_api.reply_message(event.reply_token, buttons_template_message )    		
 		   
     if text == 'help':
-       replymsg = TextSendMessage(text="這是一個報到系統，利用手機的藍牙可以偵測你的身份。\
-       使用前必須先到 line://app/1653785431-m94O4qR9 註冊")	
+       replymsg = help_menu()# 這是一個報到系統，利用手機的藍牙可以偵測你的身份。
+       #使用前必須先到 line://app/1653785431-m94O4qR9 註冊")	
     elif text == 'export':
         ref = db.reference('/') # 參考路徑
         users_ref_list = ref.child('linebot_beacon/').get()          
@@ -283,6 +296,30 @@ def imgur_upload(image):
    print(data['data']['link'])
    return data['data']['link']
 
+def help_menu():
+    buttons_template_message = TemplateSendMessage(
+         alt_text = '我是報到系統使用說明按鈕選單模板',
+         template = ButtonsTemplate(
+            thumbnail_image_url = 'https://i.imgur.com/QNStdTw.png', 
+            title = '雲端音樂功能選單',  # 你的標題名稱
+            text = '請選擇：',  # 你要問的問題，或是文字敘述            
+            actions = [ # action 最多只能4個喔！
+                URIAction(
+                    label = '如何報到', # 在按鈕模板上顯示的名稱
+                    uri = 'https://liff.line.me/1654118646-k9Qg40ev'  # 跳轉到的url，看你要改什麼都行，只要是url                    
+                ),
+                URIAction(
+                    label = '疑難排解', # 在按鈕模板上顯示的名稱
+                    uri = 'https://liff.line.me/1654118646-jypBWw2z'  # 跳轉到的url，看你要改什麼都行，只要是url                    
+                ),
+                URIAction(
+                    label = '註冊連結', # 在按鈕模板上顯示的名稱
+                    uri = 'line://app/1653785431-m94O4qR9'  # 跳轉到的url，看你要改什麼都行，只要是url                    
+                )
+            ]
+         )
+        )
+    return buttons_template_message 
 def lineNotifyMessage(line_token, msg):
       headers = {
           "Authorization": "Bearer " + line_token, 
