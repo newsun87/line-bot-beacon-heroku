@@ -314,7 +314,7 @@ def help_menu():
                 ),
                 URIAction(
                     label = '註冊連結', # 在按鈕模板上顯示的名稱
-                    uri = 'https://liff.line.me/1654118646-meXJwjeG'  # 跳轉到的url，看你要改什麼都行，只要是url                    
+                    uri = 'https://liff.line.me/1653785431-m94O4qR9'  # 跳轉到的url，看你要改什麼都行，只要是url                    
                 )
             ]
          )
