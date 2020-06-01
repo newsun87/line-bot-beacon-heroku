@@ -46,6 +46,10 @@ HWId = "013874c8c8"
 @app.route('/')
 def showPage():
   return render_template('index.html')
+
+@app.route('/query')
+def showQueryPage():
+  return render_template('query.html')  
   
 @app.route('/help')
 def showHelpPage():

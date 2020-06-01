@@ -1,0 +1,60 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>報到查詢</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">  
+    <!-- bootstrap 4.3.1 -->
+    <link rel="stylesheet"
+     href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>    
+   <style>
+       #MainDiv button {
+           margin:3px;
+       }
+   </style>
+   <script>
+	   $(document).ready(function (){		       
+           $.ajax({ //取得報到資料json資料字串
+                 url: "/queryJson",
+                 type: "POST",
+                 dataType: "text",
+                 success: function(JData){
+				    $("#show_text"). val("載入中....");   	 					
+				   var NewArray = JData.split("\n");
+				   $("#JSON_table").append("<tr>" +
+                     "<td>" + "報到名字   " + "</td>" +                            
+                     "<td>" + "   報到時間" + "</td>" +                            
+                     "</tr>");        
+				   for(item in NewArray){
+					   JsonOBJ = JSON.parse(NewArray[item])
+					 $("#JSON_table").append("<tr>" +
+                         "<td>" + JsonOBJ["name"] + "</td>" +                            
+                         "<td>" + '  ' + JsonOBJ["datetime"] + "</td>" +
+                         "</tr>");  						 					
+                 }
+			 },  
+                  error: function() {
+                    alert("ERROR!!!");
+                  } 
+               }); 
+                
+        });      
+      
+   
+   
+   </script>
+  
+</head>
+<body>
+    <div class="row">		
+        <div id="MainDiv" class="col-md-6" style="margin:5px">			 
+			 <table id="JSON_table"></table> 
+			
+        </div>
+    </div>
+</body>
+</html>
