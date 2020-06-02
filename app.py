@@ -61,18 +61,24 @@ def showQuestionPage():
   
 @app.route('/goal')
 def showGoalPage():
-  return render_template('goal.html')           
-  
+  return render_template('goal.html') 
+            
+
 @app.route("/queryJson", methods=['GET', 'POST']) 
-def queryJson():
+def queryJson(): 
+    content_list = []    
     json_str = ''
     ref = db.reference('/') # 參考路徑
-    users_ref = ref.child('linebot_beacon/').get()    
+    users_ref = ref.child('linebot_beacon/').get()      	  
     for userId in users_ref:
       users_userId_ref = ref.child('linebot_beacon/'+ userId)		   
       if users_userId_ref.get()['state'] == '1':
-       json_str = json_str + json.dumps(users_userId_ref.get()) +'\n'
-       print(json_str)  
+       content_list.append(users_userId_ref.get()) # 新增 一筆 dict 資料   
+    content_list.sort(key=lambda k: (k.get('datetime', 0))) # 排序時間欄位的資料
+    print('content_list...', content_list)
+    for item in content_list:
+      json_str = json_str + json.dumps(item) +'\n'
+    print(json_str)			   
     return json_str, 200, {"Content-Type": "application/json"}
 
 @app.route("/callback", methods=['POST'])

@@ -22,9 +22,9 @@
                  url: "/queryJson",
                  type: "POST",
                  dataType: "text",
-                 success: function(JData){
-				    $("#show_text"). val("載入中....");   	 					
+                 success: function(JData){				      	 					
 				   var NewArray = JData.split("\n");
+				   alert('目前報到有 ' + String(NewArray.length-1) + ' 位')				   
 				   $("#JSON_table").append("<tr>" +
                      "<td>" + "報到名字   " + "</td>" +                            
                      "<td>" + "   報到時間" + "</td>" +                            
@@ -51,7 +51,8 @@
 </head>
 <body>
     <div class="row">		
-        <div id="MainDiv" class="col-md-6" style="margin:5px">			 
+        <div id="MainDiv" class="col-md-6" style="margin:5px">
+			<p id='show_count'></p>			 
 			 <table id="JSON_table"></table> 
 			
         </div>
