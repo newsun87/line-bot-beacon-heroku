@@ -165,7 +165,7 @@ def showExport():
       data = "資料已寄出至指定信箱...."	
      else: 
       data = "資料寄送失敗...." 
-  return render_template('manage.html', data=data)                
+    return render_template('manage.html', data=data)                
 
 @app.route("/callback", methods=['POST'])
 def callback():
