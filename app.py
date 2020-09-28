@@ -148,9 +148,23 @@ def showGoalPage():
   return render_template('goal.html') 
   
 @app.route('/export')
-def showExport():  
-  data = "資料已寄出...."
-  mail()
+def showExport():
+  ref = db.reference('/') # 參考路徑
+  users_ref_list = ref.child(db_ref_path).get()          
+  fileobject = open('export.txt', mode = 'w', encoding = "utf-8")
+  nowtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+  fileobject.write("匯入時間： " + nowtime +"\n")
+  for userId in users_ref_list:
+    users_userId_ref = ref.child(db_ref_path + userId)		   
+    if users_userId_ref.get()['state'] == '1':			  
+     fileobject.write(users_userId_ref.get()['name']+"   ")	
+     fileobject.write(users_userId_ref.get()['datetime']+"\n")          
+     fileobject.close()        
+     ret = mail()
+     if ret:        
+      data = "資料已寄出至指定信箱...."	
+     else: 
+      data = "資料寄送失敗...." 
   return render_template('manage.html', data=data)                
 
 @app.route("/callback", methods=['POST'])
