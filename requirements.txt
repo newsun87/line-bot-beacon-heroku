@@ -3,3 +3,4 @@ flask
 gunicorn
 pytz
 firebase_admin
+line-notify
