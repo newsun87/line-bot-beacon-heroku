@@ -1,0 +1,163 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>報到系統</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- bootstrap 4.3.1 -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script> 
+     <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/4.12.1/firebase.js"></script>     
+   <style>
+       #MainDiv button {
+           margin:3px;
+       }
+   </style>
+    <script>    
+        var YourLiffAppId = '1654118646-4wKMqGBe';
+        var host = 'https://liff.line.me/1654118646-4wKMqGBe' // 機器人網址
+        var password = '6202963'
+        var firebaseConfig = {
+				apiKey: "AIzaSyAG501H9o5I_q-2lLKei5aDUBsJQrigxmQ",
+				authDomain: "line-bot-test-77a80.firebaseapp.com",
+				databaseURL: "https://line-bot-test-77a80.firebaseio.com"					
+        };
+        firebase.initializeApp(firebaseConfig);
+        var db_ref_path = "/line-beacon-bot/"; // firebase 資料庫基本路徑  
+        var db = firebase.database();         
+        $(document).ready(function (){
+            //init LIFF
+            initializeLiff(YourLiffAppId);                 
+            $('#ButtonExport').click(function (){              
+              var yes = confirm("所有報到資料將會寄到電子信箱....");
+                 if (yes) {
+				   document.location.href = host + '/export';			  			  
+                   return true
+                 } 
+                 else {                  
+                   return false
+                 }        
+            });	            	
+            $('#ButtonClear').click(function (){
+				var yes = confirm("所有報到資料將會清除!確定要刪除資料?");
+                 if (yes) {                  
+                   db.ref(db_ref_path).once("value", function(snapshot){
+                    if (snapshot.val()){ //存在資料						
+                     for(var key in snapshot.val()){
+					   var username = snapshot.val()[key]['name']
+					   var datetime = snapshot.val()[key]['datetime']
+					   var state = snapshot.val()[key]['state']							
+					   if (state=='1'){							
+						  db.ref(db_ref_path+'/'+key).update({'state':'0'})
+						  db.ref(db_ref_path+'/'+key).update({'datetime':''})                              							 
+					   }	                            
+                     };							 							 
+					}
+					else{
+						alert("資料庫不存在...")
+					}
+				 });	
+				   $("#field_info").val('報到資料已清除....');				  
+                   return true
+                } else {                  
+                   return false
+                }
+				  db.ref(db_ref_path).once("value", function(snapshot){
+                    if (snapshot.val()){ //存在資料						
+                     for(var key in snapshot.val()){
+					   var username = snapshot.val()[key]['name']
+					   var datetime = snapshot.val()[key]['datetime']
+					   var state = snapshot.val()[key]['state']							
+					   if (state=='1'){							
+						  db.ref(db_ref_path+'/'+key).update({'state':'0'})
+						  db.ref(db_ref_path+'/'+key).update({'datetime':''})                              							 
+					   }	                            
+                     };							 							 
+					}
+					else{
+						alert("資料庫不存在...")
+					}
+				});		
+            });		
+         
+             $('#ButtonQuery').click(function (){				 
+				 db.ref(db_ref_path).on("value", function(snapshot){
+					document.getElementById("thead").innerHTML  =""
+				    document.getElementById("tbody").innerHTML  ="" 
+                    if (snapshot.val()){ //存在資料
+					//	console.log(snapshot.val())
+					 $("#thead").append( //新增表格資料
+					   "<tr><th>報到者名稱</th>" +
+                       "<th>報到時間</th></tr>" 
+                     )                  						
+                     for(var key in snapshot.val()){
+					   var username = snapshot.val()[key]['name']
+					   var datetime = snapshot.val()[key]['datetime']
+					   var state = snapshot.val()[key]['state']							
+					   if ((state=='1')&&(datetime!='')){
+							$("#tbody").append( //新增表格資料
+							  "<tr><td>" + snapshot.val()[key]['name'] + "</td>" +
+                              "<td>" + snapshot.val()[key]['datetime'] + "</td></tr>"	
+                            )							 
+						}	                            
+                     };							 							 
+					}
+					else{
+						alert("資料庫不存在...")
+					}	
+					
+                });				                
+             });        
+         });            
+        
+        function initializeLiff(myLiffId){
+            liff
+                .init({
+                    liffId: myLiffId
+                })
+                .then(() => {                   
+                    initializeApp(); //取得LIFF各種物件及屬性
+                })
+                .catch((err) => {
+                    alert(JSON.stringify(err));
+                });
+        }
+        
+        function initializeApp(){
+			if (!liff.isLoggedIn()) { // 如果Line用戶沒有登入，就必須事先登入        
+				liff.login();
+            }        
+			const context = liff.getContext(); //取得環境物件
+			$('input[name="userId"]').val(context.userId); //設定表單欄位值
+			const accessToken = liff.getAccessToken(); //取得用戶access token			 
+        }            
+    </script>
+</head>
+<body>
+    <div class="row">		
+        <div id="MainDiv" class="col-md-6" style="margin:5px">		    
+             <img src="static/query.png" width="32" height="32">             
+             <button class="btn btn-primary" id="ButtonQuery">查詢</button> 
+             <img src="static/arrange.png" width="32" height="32">                        
+             <button class="btn btn-primary" id="ButtonExport">彙整</button>
+             <img src="static/clear.png" width="32" height="32">             
+             <button class="btn btn-primary" id="ButtonClear">清除</button>
+             <p>             
+             <table id="mainTable" class="display hover" border="1">	    
+              <thead id="thead" align="center">               
+              </thead> 
+              <tbody id="tbody" align="center">		 
+              </tbody>
+             </table>           
+             <hr />                
+             <label>訊息顯示</label>
+             <textarea class="form-control" rows="5" type="text" id="field_info">{{data}}</textarea> <br />           
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,125 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>報到系統</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- bootstrap 4.3.1 -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>    
+   <style>
+       #MainDiv button {
+           margin:3px;
+       }
+   </style>
+    <script>        
+        var YourLiffAppId = '1654118646-4wKMqGBe'
+        var host = 'https://liff.line.me/1654118646-4wKMqGBe' // 機器人網址
+        var password = '6202963'
+        
+        $(document).ready(function () {
+            //init LIFF
+            initializeLiff(YourLiffAppId);           
+            //ButtonGetProfile
+            $('#ButtonGetProfile').click(() => {
+                //取得User Proile
+                liff.getProfile().then(function(profile){
+                  var profileInfo = "name: " + profile.displayName + 
+                       // "\nuserId: " + profile.userId + 
+                     "\npictureUrl: " + profile.pictureUrl 
+                  $('#field_info').val( profileInfo);                       
+                });
+            }); 
+            $('#ButtonManage').click(function () {
+				 if ($("#password").val()!= password) {
+					  alert("密碼欄輸入錯誤，重新輸入...");
+				 }	
+				 else {				
+			       document.location.href = host + '/manage';               
+		        }        
+      });                   
+            
+         });    
+      function submitTest(){ //執行關閉當前視窗及刪除資料的提示
+		    var yes = confirm("你的資料將會消失!確定要刪除你的資料?");
+               if (yes) {                  
+                   liff.closeWindow();
+                   return true
+               } else {                  
+                   return false
+               }
+     } 
+     
+     function checkinTest(){ //執行關閉當前視窗及刪除資料的提示
+		    var yes = confirm("你的報到資料將會消失!確定要清除你的資料?");
+               if (yes) {                  
+                   liff.closeWindow();
+                   return true
+               } else {                  
+                   return false
+               }
+     }        
+                   
+      function initializeLiff(myLiffId){
+            liff
+                .init({
+                    liffId: myLiffId
+                })
+                .then(() => {                   
+                    initializeApp(); //取得LIFF各種物件及屬性
+                })
+                .catch((err) => {
+                    alert(JSON.stringify(err));
+                });
+        }
+        
+      function initializeApp(){
+			if (!liff.isLoggedIn()){ // 如果Line用戶沒有登入，就必須事先登入        
+				liff.login();
+            }        
+			const context = liff.getContext(); //取得環境物件
+			$('input[name="userId"]').val(context.userId); //設定表單欄位值
+			const accessToken = liff.getAccessToken(); //取得用戶 access token	 
+       }            
+    </script>
+</head>
+<body>
+    <div class="row">		
+        <div id="MainDiv" class="col-md-6" style="margin:5px">
+			<form method='post' enctype='multipart/form-data'>
+			  <img src="static/id.png" width="32" height="32"> 
+			  <input type="text"  id="username" name="username" maxlength="10" size="10 " placeholder="請輸入用戶的正式名字" required/>
+			  <input type="hidden" name="userId" />		     
+		      <input class="btn btn-primary" id="registername"  type='submit' value='註冊'/>
+		    </form>	
+		     <hr /> 
+		    <form method='post' enctype='multipart/form-data' onsubmit="return submitTest();">
+			  <img src="static/exit.png" width="32" height="32"> 
+			  <input type="hidden" name="userId" />	
+			  <input class="btn btn-primary" id='withdraw' type="submit" name='withdraw' value='用戶註銷'/>	      
+		    </form>	<br>		    
+		    <form method='post' enctype='multipart/form-data' onsubmit="return checkinTest();">
+			  <img src="static/checkin.png" width="32" height="32"> 
+			  <input type="hidden" name="userId" />	
+			  <input class="btn btn-primary" id='checkin' type="submit" name='checkin' value='重新報到'/>	      
+		    </form>				        
+            <hr /> 		 
+            <img src="static/hand.png" width="32" height="32">          
+            <button class="btn btn-primary" id="ButtonGetProfile">LINE 用戶資訊</button>          
+            <table id="JSON_table"></table> 
+            <hr /> 
+             <img src="static/manage.png" width="32" height="32"> 
+			  <input type="password" id="password" maxlength="10" size="10" value='' required placeholder="請輸入管理者的密碼"/>
+              <button class="btn btn-primary" id="ButtonManage">網站管理</button><br> 	        
+            <hr />                
+            <label>訊息顯示</label>
+            <textarea class="form-control" rows="5" type="text" id="field_info" >{{data}}</textarea>   <br />           
+            <hr />
+        </div>
+    </div>
+</body>
+</html>

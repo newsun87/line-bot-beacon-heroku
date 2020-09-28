@@ -1,162 +1,107 @@
-﻿<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <title>報到系統</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <!-- bootstrap 4.3.1 -->
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
-    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>    
-   <style>
-       #MainDiv button {
-           margin:3px;
-       }
-   </style>
-    <script>    
-        //你的liff app ID, 例如 --> 0000000000-spPeRmAn
-        var YourLiffAppId = '1653785431-m94O4qR9'     
-
-        $(document).ready(function () {
-            //init LIFF
-            initializeLiff(YourLiffAppId);
-            $('#ButtonScan').click(() => {
-                liff.scanCode().then((ret) => {
-                    //alert(JSON.stringify(ret));
-                    $('#field_info').val(ret.value);
-                }, (err) => {
-                    alert(JSON.stringify(err));
-                }
-                );
-            });            
-
-            $('#ButtonGetContext').click(() => {
-				const context = liff.getContext();
-                var contextInfo = "type: " + context.type + 
-					"\nutouId: " + context.utouId +
-					"\nroomId: " + context.groupId +
-					"\ngroudId: " + context.groupId + 
-					"\nuserid: " + context.userId +
-					"\nviewType: " + context.viewType + 
-					"\naccessTokenHash: " + context.accessTokenHash
-                $('#field_info').val(contextInfo);
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">        
+        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
+        <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" />-->
+        <link rel="stylesheet" href="static/css/line-login.css" />
+        <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js"></script> -->      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>-->
+       <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+        <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+       <script src="https://www.gstatic.com/firebasejs/4.12.1/firebase.js"></script>       
+        <title>LINE Web Login</title>
+    </head>
+    <body>
+		 <div class="container">
+      <div class="row">
+        <div class="col-md-4 col-md-offset-4">
+          <div class="area">
+            <h4 class="text-center area-margin">歡迎使用註冊服務</h4>
+            <h4 class="text-center area-margin">點選網站登入</h4>
+            <div id="web-login-button" class="center-block area-margin">
+              <a class="center-block" href="javascript:void(0)" onclick="myJsFunc();"></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>       
+      
+        <script>          
+			var YourLiffAppId = '1654118646-4wKMqGBe'; 
+			initializeLiff(YourLiffAppId); // 初始化 LIFF              
+			var firebaseConfig = {
+				apiKey: "AIzaSyAG501H9o5I_q-2lLKei5aDUBsJQrigxmQ",
+				authDomain: "line-bot-test-77a80.firebaseapp.com",
+				databaseURL: "https://line-bot-test-77a80.firebaseio.com"					
+            };
+            firebase.initializeApp(firebaseConfig);
+            var db = firebase.database();   
+            var host = 'https://liff.line.me/1654118646-4wKMqGBe'// 機器人網址
+            var host_register = host + '/register' // 註冊網址
+            var db_ref_path = "/line-beacon-bot/"; // firebase 資料庫基本路徑  
+              // Initialize Firebase                                     
+			$(document).ready(function(){
+			//   initializeLiff(YourLiffAppId); // 初始化 LIFF  		                    
             });
-
-            //ButtonGetProfile
-            $('#ButtonGetProfile').click(() => {
-                //取得User Proile
-                liff.getProfile().then(
-                    (profile) => {
-                        //顯示在text box中
-                        var profileInfo = "name: " + profile.displayName + 
-                        "\nuserId: " + profile.userId + 
-                        "\npictureUrl: " + profile.pictureUrl 
-                        $('#field_info').val( profileInfo);                       
-                      }
-                    );
-            });
-             //ButtonSendMsg
-            $('#ButtonSendMsg').click(function () {	
-				 var picurl= "https://i.imgur.com/6c9QOyC.png"
-
-                if ($('#msg').val()!=""){
-                  liff.sendMessages([
-                    {
-                        type: 'text',
-                        text: 'register~' + $('#msg').val() + '~' + picurl                     
-                    }
-                  ])
-                    .then(() => {
-                        liff.closeWindow();
-                    })
-                }
-                else {
-                  $('#field_info').val("註冊資料不得空白");
-               }
-
-            });
-            
-            $('#ButtonExit').click(function () {							
-                  liff.sendMessages([
-                    {
-                        type: 'text',
-                        text: 'exit'                        
-                    }
-                  ])
-                    .then(() => {
-                        liff.closeWindow();
-                    })                
-            });
-            
-            $('#ButtonGetHelp').click(function () {							
-                  liff.sendMessages([
-                    {
-                        type: 'text',
-                        text: 'help'                        
-                    }
-                  ])
-                    .then(() => {
-                        liff.closeWindow();
-                    })                
-            });
-            
-            $('#ButtonExport').click(function () {
-				 if ($("#email").val() == ""){
-					 alert("信箱欄位不得空白");
-				 }
-				 else if ($("#email").val()!= "12345678") {
-					  alert("密碼欄輸入錯誤，重新輸入...");
-				 }				 
-				 else{								
-                  liff.sendMessages([
-                    {
-                        type: 'text',
-                        text: 'export'                        
-                    }
-                  ])
-                    .then(() => {
-                        liff.closeWindow();
-                    }) 
-				}               
-            });
+            var userId;           
+                      
+            function myJsFunc(){								
+				liff.getProfile().then(function(profile){
+                    //顯示在text box中
+                    //userId = profile.userId; //取得用戶 userId
+                    picUrl = profile.pictureUrl; //取得用戶圖片
+                    lineName = profile.displayName;//取得用戶 LINE 名稱                                                                                
+                    }); 
+                    //檢查用戶資料庫路徑是否存在               
+                 db.ref(db_ref_path+userId).on("value", snapshot => {
+                    if (!snapshot.exists()){									  
+					  var username = '';
+					  var userID = userId ;
+					  var linename = lineName;
+                      var state = '';
+                      var datetime = '';
+                      var picurl = picUrl;                      
+                      var linenotify_access_code ='';
+                      //alert(picurl)
+                      var user_data = {"name":username, "userID":userId,"LINE name":linename, 
+						  "picurl": picurl, "state":state, "datetime":datetime,
+						   "LineNotify":linenotify_access_code} ;          
+                      db.ref(db_ref_path+userId).set(user_data) // 增加資料
+				    }				                     
+                 });  
+                 //檢查用戶資料庫欄位LineNotify是否有值               
+                 db.ref(db_ref_path+userId+'/LineNotify').on("value", snapshot => {
+                    if (snapshot.exists()){
+						if (snapshot.val() == ''){
+							alert("設定 LineNotify 報到通知!")														
+							redirect_lineNotify() // 登入到 LineNotify 連動設定							
+						}
+						else {
+							//alert("linenotify has value")	
+							window.location.href = host_register	//導入到註冊網頁					
+						}
+					}								
+					  
+                 }); 			
+		       } 
 		
-             $('#ButtonClear').click(function (){
-				 if ($("#clrpwd").val() == ""){
-					 alert("密碼欄位不得空白");
-				 } 
-				 else if ($("#clrpwd").val()!= "12345678") {
-					  alert("密碼欄輸入錯誤，重新輸入...");
-				 }
-				 else{								
-                  liff.sendMessages([
-                    {
-                        type: 'text',
-                        text: 'clear'                        
-                    }
-                  ])
-                    .then(() => {
-                        liff.closeWindow();
-                    }) 
-				}               
-            });		
-         
-      $('#ButtonQuery').click(function () {
-				 if  ($("#password").val() == ""){
-					 alert("密碼欄位不得空白");
-				 } 
-				 else if ($("#password").val()!= "12345678") {
-					  alert("密碼欄輸入錯誤，重新輸入...");
-				 }	
-				 else {  
-				window.open("https://liff.line.me/1654118646-meXJwjeG");              
-		  }        
-      });        
-  });            
-        
-        function initializeLiff(myLiffId){
+		 function redirect_lineNotify(){ // line Notify 連動設定
+			 var client_id = 'yTsl033wU15hKy05FQkxRH'; // channel ID
+             var redirect_uri = host + '/register';
+             var link = 'https://notify-bot.line.me/oauth/authorize?';
+             link += 'response_type=code';
+             link += '&client_id=' + client_id;
+             link += '&redirect_uri=' + redirect_uri; //登入成功後導入的頁面
+             link += '&scope=notify';
+             link += '&state='+userId;               
+             window.location.href = link;			 
+		 }
+		
+		 function initializeLiff(myLiffId){
             liff
                 .init({
                     liffId: myLiffId
@@ -165,7 +110,8 @@
                     initializeApp(); //取得LIFF各種物件及屬性
                 })
                 .catch((err) => {
-                    alert(JSON.stringify(err));
+                    document.getElementById("liffAppContent").classList.add('hidden');
+                    document.getElementById("liffInitErrorMessage").classList.remove('hidden');
                 });
         }
         
@@ -174,44 +120,12 @@
         
 				liff.login();
             }        
-			const context = liff.getContext(); //取得環境物件
-			$('input[name="userId"]').val(context.userId); //設定表單欄位值
-			const accessToken = liff.getAccessToken(); //取得用戶access token				
-			 
-  }            
-    </script>
-</head>
-<body>
-    <div class="row">		
-        <div id="MainDiv" class="col-md-6" style="margin:5px">			
-			 <img src="static/id.png" width="32" height="32"> 
-            <input type="text" id="msg" maxlength="15" placeholder="請輸入用戶的正式名字" />
-            <button class="btn btn-primary" id="ButtonSendMsg">註冊</button>
-            <img src="static/exit.png" width="32" height="32">             
-            <button class="btn btn-primary" id="ButtonExit">註銷</button><br>             
-             <img src="static/keyword.png" width="32" height="32"> 
-             <input type="password" id="password" maxlength="10" placeholder="請輸入管理者的密碼"/>
-            <button class="btn btn-primary" id="ButtonQuery">查詢</button><br>  
-             <img src="static/keyword.png" width="32" height="32">
-            <Input Type="Text" Name="email" id="email" MaxLength="20" placeholder="請輸入管理者的密碼">            
-            <button class="btn btn-primary" id="ButtonExport">彙整</button><br> 
-            <img src="static/keyword.png" width="32" height="32">
-            <input type="password" id="clrpwd" maxlength="10" placeholder="請輸入管理者的密碼"/>
-            <button class="btn btn-primary" id="ButtonClear">清除</button><br> 
-           
-            <hr /> 
-            <img src="static/hand.png" width="32" height="32">             			
-            <button class="btn btn-primary" id="ButtonGetContext">Get Context</button>
-            <button class="btn btn-primary" id="ButtonScan">掃描 QR Code</button>
-            <button class="btn btn-primary" id="ButtonGetProfile">Get User Profile</button> 
-            <button class="btn btn-primary" id="ButtonGetHelp">求助</button><br>            
-           
-            <table id="JSON_table"></table> 
-            <hr />                
-            <label>訊息顯示</label>
-            <textarea class="form-control" rows="5" type="text" id="field_info"></textarea>   <br />           
-            <hr />
-        </div>
-    </div>
-</body>
-</html>
+			const context = liff.getContext(); //取得使用者類型資料
+			//$('input[name="userId"]').val(context.userId); //設定表單欄位值
+			const accessToken = liff.getAccessToken(); //取得用戶access token	
+			userId = context.userId; //取得用戶 userId						 
+       }                            
+            
+        </script>
+    </body>
+    </html>

@@ -10,12 +10,9 @@ from linebot.exceptions import (
 from linebot.models import *
 import requests
 import base64
-
-
 import json
 import requests
 from flask import render_template
-import datetime as dt
 import time
 import pytz
 import smtplib
@@ -26,6 +23,14 @@ from email import encoders #用於附檔編碼
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import db
+from line_notify import LineNotify
+import os
+from datetime import datetime as dt
+import pytz
+
+line_url_token = '3igcvnwqH2eV54CZN6N67CpYZDBgiUNW34qjCK07tPL'
+notify = LineNotify(line_url_token)
+tz = pytz.timezone('Asia/Taipei')
 
 #取得通行憑證
 cred = credentials.Certificate("serviceAccount.json")
@@ -42,14 +47,93 @@ app = Flask(__name__)
 line_bot_api = LineBotApi(access_token)
 handler = WebhookHandler(channel_secret)
 HWId = "013874c8c8"
+host = "https://liff.line.me/1654118646-4wKMqGBe"
+db_ref_path = "line-beacon-bot/";
 
-@app.route('/')
-def showPage():
-  return render_template('index.html')
+def get_access_token(autho_code):
+     url = 'https://notify-bot.line.me/oauth/token'	
+     payload = {'grant_type': 'authorization_code',
+                 'code': autho_code, 
+	             'redirect_uri':host+'/register', 
+	             'client_id':'yTsl033wU15hKy05FQkxRH',
+	             'client_secret': 'ikUE7fD7JrDxVpny5Ca40FKtvKh8l3uW4PbFFHbg7FF'}
+     headers = {'content-type': 'application/x-www-form-urlencoded'} 
+     try:     
+       r = requests.post(url, data=payload, headers=headers) # 回應為 JSON 字串
+       print('r.text...',r.text) 
+     except exceptions.Timeout as e:
+        print('请求超时：'+str(e.message))
+     except exceptions.HTTPError as e:
+        print('http请求错误:'+str(e.message))
+     else:       
+        if r.status_code == 200:
+          #print('r.text...',r.text)			
+          json_obj = json.loads(r.text) # 轉成 json 物件
+          access_token = json_obj['access_token']
+          print('access_token:', json_obj['access_token'])
+          #print('ID_token:', json_obj['id_token'])
+          return access_token            
+        else:
+           return 'error'
 
+@app.route('/') 
+def showPage():    
+    return render_template('index.html')
+    
+@app.route('/register', methods=['GET', 'POST']) 
+def showRegister():    
+    ref = db.reference('/') # 參考路徑
+    #users_userId_ref = ref.child('line-beacon-bot/'+ userId)
+    if request.method=='GET':
+      userId = request.args.get('state')  
+      if userId != None:
+        #profile = line_bot_api.get_profile(userId)# 呼叫取得用戶資訊 API 
+        #userId = profile.user_id # 取得用戶 userId   
+        autho_code = request.args.get('code') #取得 LineNotify 驗證碼
+        time.sleep(1)
+        linenotify_access_token = get_access_token(autho_code) #取得存取碼
+        print('linenotify_access_token...', linenotify_access_token)               
+        users_userId_ref = ref.child('line-beacon-bot/'+ userId)        
+        users_userId_ref.update({'LineNotify':'{access_token}'.format(access_token=linenotify_access_token)})
+      return render_template('register.html')  
+    if request.method=='POST':
+       if request.form.get('username')!=None: 
+         userId = request.form.get('userId') #取得用戶名稱
+         username = request.form.get('username')
+         print('username...', username)
+         now = dt.now(tz) # 現在的時間(台北時區)
+         nowtime = now.strftime("%Y-%m-%d %H:%M:%S")        
+         users_userId_ref = ref.child('line-beacon-bot/'+ userId)
+         users_userId_ref.update({'name':'{username}'.format(username=username)})
+         users_userId_ref.update({'state':'0'})
+         users_userId_ref.update({'datetime':''})
+         data = '用戶名字已註冊成功....'
+       elif request.form.get('checkin')!=None: 
+         userId = request.form.get('userId') #取得用戶名稱
+         username = request.form.get('username')
+         print('username...', username)                       
+         users_userId_ref = ref.child('line-beacon-bot/'+ userId)
+         print('name...', users_userId_ref.get()['name']) 
+         if users_userId_ref.get()['name']!='':          
+           users_userId_ref.update({'state':'0'})
+           users_userId_ref.update({'datetime':''})
+           data = '重新報到設定成功....' 
+         else:
+           data ='你尚未註冊，無法設定...'                    
+       elif request.form.get('withdraw')!=None: #取得用戶名稱         
+         userId = request.form.get('userId') #取得用戶名稱
+         users_userId_ref = ref.child('line-beacon-bot/'+ userId)         
+         users_userId_ref.set({}) #刪除用戶資料 
+         data = '用戶資料已刪除....'      
+       return render_template('register.html', data=data)     
+
+@app.route('/manage', methods=['GET', 'POST']) 
+def manage(): 
+  return render_template('manage.html')	 
+  
 @app.route('/query')
-def showQueryPage():
-  return render_template('query.html')  
+def showQuery():  
+   return render_template('query.html')  
   
 @app.route('/help')
 def showHelpPage():
@@ -62,24 +146,12 @@ def showQuestionPage():
 @app.route('/goal')
 def showGoalPage():
   return render_template('goal.html') 
-            
-
-@app.route("/queryJson", methods=['GET', 'POST']) 
-def queryJson(): 
-    content_list = []    
-    json_str = ''
-    ref = db.reference('/') # 參考路徑
-    users_ref = ref.child('linebot_beacon/').get()      	  
-    for userId in users_ref:
-      users_userId_ref = ref.child('linebot_beacon/'+ userId)		   
-      if users_userId_ref.get()['state'] == '1':
-       content_list.append(users_userId_ref.get()) # 新增 一筆 dict 資料   
-    content_list.sort(key=lambda k: (k.get('datetime', 0))) # 排序時間欄位的資料
-    print('content_list...', content_list)
-    for item in content_list:
-      json_str = json_str + json.dumps(item) +'\n'
-    print(json_str)			   
-    return json_str, 200, {"Content-Type": "application/json"}
+  
+@app.route('/export')
+def showExport():  
+  data = "資料已寄出...."
+  mail()
+  return render_template('manage.html', data=data)                
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -109,7 +181,7 @@ def handle_image_message(event):
             fd.write(chunk)			  
       userId = event.source.user_id
       ref = db.reference('/') # 參考路徑	
-      users_userId_ref = ref.child('linebot_beacon/'+ userId)	  	  
+      users_userId_ref = ref.child(db_ref_path + userId)	  	  
       imgurl = imgur_upload('temp_image.jpg')
       users_userId_ref.update({
 		'picurl': imgurl })	
@@ -117,23 +189,23 @@ def handle_image_message(event):
       checkState = users_userId_ref.get()["state"]
       if checkState == '1':
         picurl = users_userId_ref.get()['picurl']
-        datetime = users_userId_ref.get()["datetime"]	
-        notifymsg = users_userId_ref.get()["name"] + ' 報到於 ' + datetime + picurl
-        lineNotifyMessage(line_token, notifymsg)	    
-      line_bot_api.reply_message(event.reply_token, message)
-	      	      	
+        datetime = users_userId_ref.get()["datetime"]
+        user_linenotify_token =	users_userId_ref.get()["LineNotify"]             	    
+      line_bot_api.reply_message(event.reply_token, message)	      	      	
 	  
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):    
-    userId = event.source.user_id
+    userId = event.source.user_id    
     text = event.message.text # message from user 
-    ref = db.reference('/') # 參考路徑   	    
-    
+    ref = db.reference('/') # 參考路徑   
     if text == 'query':
-        users_userId_ref = ref.child('linebot_beacon/'+ userId)
-        if users_userId_ref.get()== None: # 新用戶            
-            replymsg = "你尚未註冊喔!"
-            picurl = 'https://i.imgur.com/6c9QOyC.png'	
+        users_userId_ref = ref.child(db_ref_path + userId)
+        if users_userId_ref.get()== None or users_userId_ref.child("name").get()=='': # 新用戶
+            profile = line_bot_api.get_profile(userId)# 取得用戶公開資料資訊 API
+            print('profile..', profile) # 取得用戶圖片網址
+            picurl = profile.picture_url 
+            line_name = profile.display_name               
+            replymsg = "你尚未註冊喔!"            
         elif users_userId_ref.get()['state'] == '0': 
             name = users_userId_ref.get()['name']
             picurl = users_userId_ref.get()['picurl']            
@@ -142,7 +214,7 @@ def handle_text_message(event):
             name = users_userId_ref.get()['name']
             picurl = users_userId_ref.get()['picurl'] 
             datetime = users_userId_ref.get()['datetime']                         
-            replymsg = "用戶" + name + " 已經報到! \n報到時間：" + datetime 
+            replymsg = "用戶 " + name + " 已經報到! \n報到時間：" + datetime 
         buttons_template_message = TemplateSendMessage(
          alt_text = '我是一個按鈕模板',  # 當你發送到你的Line bot 群組的時候，通知的名稱
          template = ButtonsTemplate(
@@ -151,24 +223,24 @@ def handle_text_message(event):
             actions = [ # action 最多只能4個喔！
                 URIAction(
                     label = "修改設定", # 在按鈕模板上顯示的名稱
-                    uri = "line://app/1653785431-m94O4qR9" # 點擊後，顯示文字！
+                    uri = host # 點擊後，顯示文字！
                 )
             ]
          )
         )
-        line_bot_api.reply_message(event.reply_token, buttons_template_message )    		
+        line_bot_api.reply_message(event.reply_token, buttons_template_message)    		
 		   
     if text == 'help':
        replymsg = help_menu()# 這是一個報到系統，利用手機的藍牙可以偵測你的身份。
        #使用前必須先到 line://app/1653785431-m94O4qR9 註冊")	
     elif text == 'export':
         ref = db.reference('/') # 參考路徑
-        users_ref_list = ref.child('linebot_beacon/').get()          
+        users_ref_list = ref.child(db_ref_path).get()          
         fileobject = open('export.txt', mode = 'w', encoding = "utf-8")
         nowtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         fileobject.write("匯入時間： " + nowtime +"\n")
         for userId in users_ref_list:
-          users_userId_ref = ref.child('linebot_beacon/'+ userId)		   
+          users_userId_ref = ref.child(db_ref_path + userId)		   
           if users_userId_ref.get()['state'] == '1':			  
             fileobject.write(users_userId_ref.get()['name']+"   ")	
             fileobject.write(users_userId_ref.get()['datetime']+"\n")          
@@ -177,41 +249,14 @@ def handle_text_message(event):
         if ret:        
           replymsg =  TextSendMessage(text= "資料已寄指定信箱....")	
         else: 
-          replymsg = TextSendMessage(text= "資料寄送失敗....")	
-                 
-    elif text.startswith('register'): 
-      split_array = text.split("~")
-      split_num = len(split_array)
-      print('split_num', split_num)
-      if split_num == 3:
-        command = text.split("~", 2)[0]
-        name = text.split("~", 2)[1]
-        picurl = text.split("~", 2)[2]   
-      print(name, picurl)		  
-      print(command)
-      if (command == 'register'):          
-          users_userId_ref = ref.child('linebot_beacon/'+ userId)
-          print(users_userId_ref.get())
-          username = name
-          state = '0'
-          datetime = ''
-          user_data = {"name":username, "picurl": picurl, "state":state, "datetime":datetime}
-          users_userId_ref = ref.child('linebot_beacon/'+ userId)
-          if users_userId_ref.get()== None: # 新用戶            
-            users_userId_ref.set(user_data) # 增加資料
-            print("儲存完畢", user_data)
-            replymsg = TextSendMessage(text=" 用戶" + name + " 新增註冊資料成功" )	
-          else:
-            users_userId_ref.set(user_data) # 增加資料
-            print("資料修改完畢", user_data)
-            replymsg = TextSendMessage(text=" 用戶" + name + " 修改資料成功" )			  
+          replymsg = TextSendMessage(text= "資料寄送失敗....")    
           				   
     elif text == 'clear':
       if userId == "Ubf2b9f4188d45848fb4697d41c962591":	
-       #users_userId_ref = ref.child('linebot_beacon/' + userId)	  	
-       users_ref_list = ref.child('linebot_beacon/').get()
+       #users_userId_ref = ref.child(db_ref_path + userId)	  	
+       users_ref_list = ref.child(db_ref_path).get()
        for userid in users_ref_list:
-         ref.child('linebot_beacon/'+userid).update({
+         ref.child(db_ref_path +userid).update({
 		    'state': '0',
 			'datetime':''
 		 })
@@ -220,7 +265,7 @@ def handle_text_message(event):
         replymsg = TextSendMessage(text=" 無管理權限....") 
         
     elif text == 'exit':      
-       users_userId_ref = ref.child('linebot_beacon/' + userId)	
+       users_userId_ref = ref.child(db_ref_path + userId)	
        if users_userId_ref.get() == None:
           replymsg = TextSendMessage(text=" 查無此資料....." ) 
        else:
@@ -233,9 +278,14 @@ def handle_text_message(event):
 def handle_beacon_event(event): #處理 beacon偵測事件
     ref = db.reference('/') # 參考路徑   	 
     userId =  event.source.user_id 
-    users_userId_ref = ref.child('linebot_beacon/'+ userId)
+    users_userId_ref = ref.child(db_ref_path + userId)
     if event.beacon.hwid == HWId:		
-      if users_userId_ref.get() == None:
+      if users_userId_ref.get() == None or ref.child(db_ref_path + userId +'/name').get()=='': # 新用戶或未註冊:
+       if ref.child(db_ref_path + userId +'/picurl').get()=='':
+          picurl = 'https://i.imgur.com/6c9QOyC.png' 
+       else:
+          picurl = users_userId_ref.get()['picurl']	  
+			  
        replymsg = "Hi, 我是報到系統，我不知道你是誰? \n要記得先去註冊才可以報到喔!" 
        print("你是誰?....")  
        picurl = 'https://i.imgur.com/6c9QOyC.png'    
@@ -253,17 +303,16 @@ def handle_beacon_event(event): #處理 beacon偵測事件
              )
            )         
        line_bot_api.reply_message(event.reply_token,buttons_template_message)   
-      else:					
-         tw = pytz.timezone('Asia/Taipei')#設定台灣時區        
-         nowdatetime = dt.datetime.now() #現在時間
-         nowtime = tw.localize(nowdatetime)#台灣時區的現在時間
-         nowtime = nowtime.strftime('%Y-%m-%d  %H:%M:%S')#輸出指定時間格式                 
+      else:
+         tw = pytz.timezone('Asia/Taipei')#設定台灣時區  
+         now = dt.now(tw) # 現在的時間(台北時區)
+         nowtime = now.strftime("%Y-%m-%d %H:%M:%S")        
+         print('nowtime....',nowtime)               
          print("userid...", userId)
          name = users_userId_ref.get()["name"]  
          picurl = users_userId_ref.get()["picurl"]       
          checkState = users_userId_ref.get()["state"]
-         print('checkState', checkState)
-         
+         print('checkState', checkState)         
          if checkState == "0": # 修改報到狀態
            users_userId_ref.update({
 		 	   "state":"1",
@@ -284,9 +333,11 @@ def handle_beacon_event(event): #處理 beacon偵測事件
               ]
              )
            )         
-           newmsg = "我是報到系統，恭喜 " + name +' 於 ' + nowtime + " 報到成功! HWId = " + HWId            
+           #newmsg = "我是報到系統，恭喜 " + name +' 於 ' + nowtime + " 報到成功! HWId = " + HWId            
            notifymsg = users_userId_ref.get()["name"] + ' 報到於 ' + nowtime +'\n' + picurl
+           user_linenotify_token =	users_userId_ref.get()["LineNotify"]
            lineNotifyMessage(line_token, notifymsg)
+           lineNotifyMessage(user_linenotify_token, notifymsg)
            line_bot_api.reply_message(event.reply_token, buttons_template_message)            
                 		             
 
@@ -316,15 +367,15 @@ def help_menu():
             actions = [ # action 最多只能4個喔！
                 URIAction(
                     label = '如何報到', # 在按鈕模板上顯示的名稱
-                    uri = 'https://liff.line.me/1654118646-k9Qg40ev'  # 跳轉到的url，看你要改什麼都行，只要是url                    
+                    uri = host + '/help'  # 跳轉到的url，看你要改什麼都行，只要是url                    
                 ),
                 URIAction(
                     label = '疑難排解', # 在按鈕模板上顯示的名稱
-                    uri = 'https://liff.line.me/1654118646-jypBWw2z'  # 跳轉到的url，看你要改什麼都行，只要是url                    
+                    uri = host + '/question' # 跳轉到的url，看你要改什麼都行，只要是url                    
                 ),
                 URIAction(
                     label = '註冊連結', # 在按鈕模板上顯示的名稱
-                    uri = 'https://liff.line.me/1653785431-m94O4qR9'  # 跳轉到的url，看你要改什麼都行，只要是url                    
+                    uri = host  # 跳轉到的url，看你要改什麼都行，只要是url                    
                 )
             ]
          )
@@ -340,6 +391,14 @@ def lineNotifyMessage(line_token, msg):
           headers = headers, params = payload)
       return r.status_code
       
+def getNgrokURL(): 
+    os.system("ps aux | grep ngrok | awk '{print $2}' | xargs kill -9")
+    os.system('sh ngrok_url.sh')
+    f = open("URL5000.txt")
+    ngrok_url = f.read()
+    print('url..', ngrok_url)     
+    notify.send('伺服器網址 ' + ngrok_url)      
+
 def mail(): 
     ret=True
     # Account infomation load
@@ -374,6 +433,7 @@ def mail():
       ret=False
     return ret
     
-if __name__ == "__main__":   
+if __name__ == "__main__": 
+	#getNgrokURL()  
 	app.run(debug=True, host='0.0.0.0', port=5000)            
 
