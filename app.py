@@ -205,8 +205,9 @@ def handle_image_message(event):
         picurl = users_userId_ref.get()['picurl']
         datetime = users_userId_ref.get()["datetime"]
         user_linenotify_token =	users_userId_ref.get()["LineNotify"]             	    
-      line_bot_api.reply_message(event.reply_token, message)	      	      	
-	  
+      line_bot_api.reply_message(event.reply_token, message)
+      	      	      	
+host = "https://liff.line.me/1654118646-4wKMqGBe"	  
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):    
     userId = event.source.user_id    
