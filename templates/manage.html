@@ -43,7 +43,7 @@
                    return false
                  }        
             });	            	
-            $('#ButtonClear').click(function (){
+            $('#ButtonClear').click(function (){ // 清除所有用戶報到資料
 				var yes = confirm("所有報到資料將會清除!確定要刪除資料?");
                  if (yes) {                  
                    db.ref(db_ref_path).once("value", function(snapshot){
@@ -84,33 +84,37 @@
 					}
 				});		
             });		
-         
-             $('#ButtonQuery').click(function (){				 
-				 db.ref(db_ref_path).on("value", function(snapshot){
+             
+             $('#ButtonQuery').click(function (){ // 查詢用戶報到資料
+				 var count = 0;				 
+				 db.ref(db_ref_path).orderByChild("datetime").on("value", function(snapshot){
+					if (snapshot.val()){
 					document.getElementById("thead").innerHTML  =""
 				    document.getElementById("tbody").innerHTML  ="" 
-                    if (snapshot.val()){ //存在資料
-					//	console.log(snapshot.val())
+				    //	console.log(snapshot.val())
 					 $("#thead").append( //新增表格資料
-					   "<tr><th>報到者名稱</th>" +
+					   "<tr><th>報到順序</th><th>報到者名稱</th>" +
                        "<th>報到時間</th></tr>" 
-                     )                  						
-                     for(var key in snapshot.val()){
-					   var username = snapshot.val()[key]['name']
-					   var datetime = snapshot.val()[key]['datetime']
-					   var state = snapshot.val()[key]['state']							
-					   if ((state=='1')&&(datetime!='')){
+                     )                    			
+                     snapshot.forEach(function(item){
+                        //  console.log(item.val());
+                          var username = item.val()['name']
+					      var datetime = item.val()['datetime']
+					      var state = item.val()['state']					     
+					      if ((state=='1')&&(datetime!='')){
+						    count = count + 1						    						    
 							$("#tbody").append( //新增表格資料
-							  "<tr><td>" + snapshot.val()[key]['name'] + "</td>" +
-                              "<td>" + snapshot.val()[key]['datetime'] + "</td></tr>"	
-                            )							 
-						}	                            
-                     };							 							 
+							  "<tr><td>" + count + "</td>" +
+							  "<td>" + username + "</td>" +
+                              "<td>" + datetime + "</td></tr>"
+                            )  							 
+						  }	       
+                     })
+                    }
+                    else {
+						alert("資料庫不存在")
 					}
-					else{
-						alert("資料庫不存在...")
-					}	
-					
+                       				
                 });				                
              });        
          });            
