@@ -86,7 +86,8 @@
             });		
              
              $('#ButtonQuery').click(function (){ // 查詢用戶報到資料
-				 var count = 0;				 
+				 var count = 0;	
+				 //查詢資料庫資料並以時間排序			 
 				 db.ref(db_ref_path).orderByChild("datetime").on("value", function(snapshot){
 					if (snapshot.val()){
 					document.getElementById("thead").innerHTML  =""

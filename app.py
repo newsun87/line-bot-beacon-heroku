@@ -82,8 +82,7 @@ def showPage():
     
 @app.route('/register', methods=['GET', 'POST']) 
 def showRegister():    
-    ref = db.reference('/') # 參考路徑
-    #users_userId_ref = ref.child('line-beacon-bot/'+ userId)
+    ref = db.reference('/') # 參考路徑    
     if request.method=='GET':
       userId = request.args.get('state')  
       if userId != None:
@@ -148,24 +147,27 @@ def showGoalPage():
   return render_template('goal.html') 
   
 @app.route('/export')
-def showExport():
+def showExport():  
+  global db_ref_path 	
   ref = db.reference('/') # 參考路徑
-  users_ref_list = ref.child(db_ref_path).get()          
+  users_ref_list = ref.child(db_ref_path).get()           
   fileobject = open('export.txt', mode = 'w', encoding = "utf-8")
   nowtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
   fileobject.write("匯入時間： " + nowtime +"\n")
   for userId in users_ref_list:
-    users_userId_ref = ref.child(db_ref_path + userId)		   
+    users_userId_ref = ref.child(db_ref_path + userId)        		   
     if users_userId_ref.get()['state'] == '1':			  
      fileobject.write(users_userId_ref.get()['name']+"   ")	
      fileobject.write(users_userId_ref.get()['datetime']+"\n")          
-     fileobject.close()        
-     ret = mail()
-     if ret:        
-      data = "資料已寄出至指定信箱...."	
-     else: 
-      data = "資料寄送失敗...." 
-    return render_template('manage.html', data=data)                
+  fileobject.close()        
+  ret = mail()
+  if ret:        
+    data = "資料已寄出至指定信箱...."	
+    print('data...',data)
+  else: 
+   data = "資料寄送失敗...."
+   print('data...',data) 
+  return render_template('manage.html', data=data)                
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -217,7 +219,7 @@ def handle_text_message(event):
         users_userId_ref = ref.child(db_ref_path + userId)
         if users_userId_ref.get()== None or users_userId_ref.child("name").get()=='': # 新用戶
             profile = line_bot_api.get_profile(userId)# 取得用戶公開資料資訊 API
-            print('profile..', profile) # 取得用戶圖片網址
+            print('profile...',profile)            
             picurl = profile.picture_url 
             line_name = profile.display_name               
             replymsg = "你尚未註冊喔!"            
