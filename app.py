@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-from flask import Flask, request, abort
+from flask import Flask, request, abort, redirect, url_for
 
 from linebot import (LineBotApi, WebhookHandler)
 from linebot.exceptions import (
@@ -78,7 +78,8 @@ def get_access_token(autho_code):
 
 @app.route('/') 
 def showPage():    
-    return render_template('index.html')
+   return render_template('index.html')
+   #return redirect(url_for('index'))
     
 @app.route('/register', methods=['GET', 'POST']) 
 def showRegister():    
@@ -209,7 +210,6 @@ def handle_image_message(event):
         user_linenotify_token =	users_userId_ref.get()["LineNotify"]             	    
       line_bot_api.reply_message(event.reply_token, message)
       	      	      	
-host = "https://liff.line.me/1654118646-4wKMqGBe"	  
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):    
     userId = event.source.user_id    
@@ -240,7 +240,7 @@ def handle_text_message(event):
             actions = [ # action 最多只能4個喔！
                 URIAction(
                     label = "修改設定", # 在按鈕模板上顯示的名稱
-                    uri = host # 點擊後，顯示文字！
+                    uri = host # 點擊後，顯示文字
                 )
             ]
          )
@@ -303,9 +303,8 @@ def handle_beacon_event(event): #處理 beacon偵測事件
        else:
           picurl = users_userId_ref.get()['picurl']	  
 			  
-       replymsg = "Hi, 我是報到系統，我不知道你是誰? \n要記得先去註冊才可以報到喔!" 
+       replymsg = "Hi, 我是報到系統，我有偵測到你，但我不知道你是誰? \n要記得先去註冊才算報到成功喔!" 
        print("你是誰?....")  
-       picurl = 'https://i.imgur.com/6c9QOyC.png'    
        buttons_template_message = TemplateSendMessage(
              alt_text = '我是一個按鈕模板',  # 當你發送到你的Line bot 群組的時候，通知的名稱
              template = ButtonsTemplate(
@@ -314,7 +313,7 @@ def handle_beacon_event(event): #處理 beacon偵測事件
               actions = [ # action 最多只能4個喔！
                 URIAction(
                     label = "註冊", # 在按鈕模板上顯示的名稱
-                    uri = "line://app/1653785431-m94O4qR9" # 點擊後，顯示文字！
+                    uri = host# 點擊後，顯示文字！
                 )
               ]
              )
@@ -365,8 +364,7 @@ def imgur_upload(image):
    headers = {
     'Authorization': 'Client-ID ' + client_id}
    params = {'image': base64.b64encode(open(image, 'rb').read())}
-
-   r = requests.post(f'https://api.imgur.com/3/image', \
+   r = requests.post('https://api.imgur.com/3/image', \
      headers=headers, data=params)
    print('status:', r.status_code)
    data = r.json() # 轉成 json 格式

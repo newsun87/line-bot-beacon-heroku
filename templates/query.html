@@ -1,0 +1,101 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>報到系統</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- bootstrap 4.3.1 -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script> 
+     <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+       <script src="https://www.gstatic.com/firebasejs/4.12.1/firebase.js"></script>      
+   <style>
+       #MainDiv button {
+           margin:3px;
+       }
+   </style>
+    <script>    
+        var YourLiffAppId = '1654118646-4wKMqGBe';
+        var db_ref_path = "/line-beacon-bot/"; // firebase 資料庫基本路徑  
+        var firebaseConfig = {
+				apiKey: "AIzaSyAG501H9o5I_q-2lLKei5aDUBsJQrigxmQ",
+				authDomain: "line-bot-test-77a80.firebaseapp.com",
+				databaseURL: "https://line-bot-test-77a80.firebaseio.com"					
+            };
+       firebase.initializeApp(firebaseConfig);
+       var db = firebase.database();   
+        var host = 'https://liff.line.me/1654118646-4wKMqGBe' // 機器人網址        
+        var password = '6202963'	
+        $(document).ready(function (){
+            //init LIFF
+            initializeLiff(YourLiffAppId);
+             //檢查用戶資料庫欄位LineNotify是否有值               
+                 db.ref(db_ref_path).on("value", function(snapshot){
+                    if (snapshot.val()){ //存在資料
+					//	console.log(snapshot.val())						
+                         for(var key in snapshot.val()){
+							 var username = snapshot.val()[key]['name']
+							 var datatime = snapshot.val()[key]['datatime']
+							 var state = snapshot.val()[key]['state']
+							// console.log(snapshot.val()[key]['name'])
+							// console.log(snapshot.val()[key]['datetime'])
+							 if ( state=='1'){
+								$("#tbody").append( //新增表格資料
+							     "<tr><td>" + snapshot.val()[key]['name'] + "</td>" +
+                                 "<td>" + snapshot.val()[key]['datetime'] + "</td></tr>"	
+                                )							 
+							 }	                            
+                         };							 							 
+					}
+					else{
+						alert("資料庫不存在...")
+					}	
+					
+                });	                     
+        
+        function initializeLiff(myLiffId){
+            liff
+                .init({
+                    liffId: myLiffId
+                })
+                .then(() => {                   
+                    initializeApp(); //取得LIFF各種物件及屬性
+                })
+                .catch((err) => {
+                    alert(JSON.stringify(err));
+                });
+        }
+        
+        function initializeApp(){
+			if (!liff.isLoggedIn()) { // 如果Line用戶沒有登入，就必須事先登入
+        
+				liff.login();
+            }        
+			const context = liff.getContext(); //取得環境物件
+			$('input[name="userId"]').val(context.userId); //設定表單欄位值
+			const accessToken = liff.getAccessToken(); //取得用戶access token				
+			 
+  }            
+    </script>
+</head>
+<body>
+    <div class="row">		
+        <div id="MainDiv" class="col-md-6" style="margin:5px">
+		<table id="mainTable" class="display hover" border="1">	    
+         <thead>
+          <tr>
+           <th>報到者名稱</th>
+           <th>報到時間</th>          
+         </tr>         
+        </thead> 
+        <tbody id="tbody">		 
+        </tbody>
+       </table>           
+    </div>
+    
+</body>
+</html>

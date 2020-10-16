@@ -3,7 +3,8 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="X-UA-Compatible" content="ie=edge">        
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">  
+        <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">      
         <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" />
         <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" />-->
         <link rel="stylesheet" href="static/css/line-login.css" />
@@ -13,24 +14,25 @@
        <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
         <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
        <script src="https://www.gstatic.com/firebasejs/4.12.1/firebase.js"></script>       
-        <title>LINE Web Login</title>
-    </head>
+        <title>LINE Web Login</title>       
+     
+    </head>    
     <body>
 		 <div class="container">
       <div class="row">
         <div class="col-md-4 col-md-offset-4">
           <div class="area">
             <h4 class="text-center area-margin">歡迎使用註冊服務</h4>
-            <h4 class="text-center area-margin">點選網站登入</h4>
-            <div id="web-login-button" class="center-block area-margin">
-              <a class="center-block" href="javascript:void(0)" onclick="myJsFunc();"></a>
-            </div>
+            <h4 class="text-center area-margin">點選網站登入</h4>            
+              <div id="web-login-button" class="center-block area-margin">
+			  <input type="button" style="width:151px;height:44px; background-image:url('./static/img/btn_login_press.png');" onclick="myJsFunc();">
+            <!--  <a class="center-block" href="javascript:void(0)" onclick="myJsFunc();"></a> -->
+           </div>
           </div>
         </div>
       </div>
-    </div>       
-      
-        <script>          
+    </div> 
+    <script>			        
 			var YourLiffAppId = '1654118646-4wKMqGBe'; 
 			initializeLiff(YourLiffAppId); // 初始化 LIFF              
 			var firebaseConfig = {
@@ -42,12 +44,14 @@
             var db = firebase.database();   
             var host = 'https://liff.line.me/1654118646-4wKMqGBe'// 機器人網址
             var host_register = host + '/register' // 註冊網址
-            var db_ref_path = "/line-beacon-bot/"; // firebase 資料庫基本路徑  
-              // Initialize Firebase                                     
-			$(document).ready(function(){
-			//   initializeLiff(YourLiffAppId); // 初始化 LIFF  		                    
-            });
-            var userId;           
+            var db_ref_path = "/line-beacon-bot/"; // firebase 資料庫基本路徑 
+            var userId;    
+              // 當視窗文件載入安畢就執行 
+           //  window.onload = function(){
+          //    myJsFunc(userId)
+          //   }                                    
+			$(document).ready(function(){				           			         
+            });                    
                       
             function myJsFunc(){								
 				liff.getProfile().then(function(profile){
@@ -123,9 +127,11 @@
 			const context = liff.getContext(); //取得使用者類型資料
 			//$('input[name="userId"]').val(context.userId); //設定表單欄位值
 			const accessToken = liff.getAccessToken(); //取得用戶access token	
-			userId = context.userId; //取得用戶 userId						 
+			userId = context.userId; //取得用戶 userId
+			console.log('userId ='+ userId) 					 
        }                            
             
-        </script>
-    </body>
+        </script>      
+       
+     </body>    
     </html>
