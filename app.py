@@ -287,8 +287,7 @@ def handle_text_message(event):
           replymsg = TextSendMessage(text=" 查無此資料....." ) 
        else:
            users_userId_ref.set({})
-           replymsg = TextSendMessage(text=" 註冊資料已移除...." )	      
-                                         
+           replymsg = TextSendMessage(text=" 註冊資料已移除...." )	                                         
     line_bot_api.reply_message(event.reply_token,replymsg ) # reply the same message from user
         
 @handler.add(BeaconEvent) 

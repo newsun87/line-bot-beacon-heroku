@@ -10,7 +10,9 @@
           href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
-    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>    
+    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script> 
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+       <script src="https://www.gstatic.com/firebasejs/4.12.1/firebase.js"></script>      
    <style>
        #MainDiv button {
            margin:3px;
@@ -18,14 +20,23 @@
    </style>
     <script>        
         var YourLiffAppId = '1654118646-4wKMqGBe'
+        //init LIFF                 
         var host = 'https://liff.line.me/1654118646-4wKMqGBe' // 機器人網址
-        var password = '6202963'
-        
-        $(document).ready(function () {
-            //init LIFF
-            initializeLiff(YourLiffAppId);           
+        var password = '6202963' 
+        var firebaseConfig = {
+				apiKey: "AIzaSyAG501H9o5I_q-2lLKei5aDUBsJQrigxmQ",
+				authDomain: "line-bot-test-77a80.firebaseapp.com",
+				databaseURL: "https://line-bot-test-77a80.firebaseio.com"					
+            };
+        firebase.initializeApp(firebaseConfig);
+        var db_ref_path = "/line-beacon-bot/"; // firebase 資料庫基本路徑 
+        var db = firebase.database();  
+        var userId;      
+        $(document).ready(function (){
+			initializeLiff(YourLiffAppId)    
+			setTimeout(function(){checkName();}, 1000);                 
             //ButtonGetProfile
-            $('#ButtonGetProfile').click(() => {
+            $('#ButtonGetProfile').click(() => {				
                 //取得User Proile
                 liff.getProfile().then(function(profile){
                   var profileInfo = "name: " + profile.displayName + 
@@ -41,9 +52,19 @@
 				 else {				
 			       document.location.href = host + '/manage';               
 		        }        
-      });                   
+           });                   
             
-         });    
+         }); 
+      function checkName(){
+		   //檢查用戶資料庫欄位LineNotify是否有值               
+                 db.ref(db_ref_path+userId+'/name').on("value", snapshot => {
+                    if (snapshot.exists()){
+						if (snapshot.val() == ''){
+							alert("你尚未註冊姓名，要先輸入..")							
+						}						
+					}				  
+                 }); 		
+	  }      
       function submitTest(){ //執行關閉當前視窗及刪除資料的提示
 		    var yes = confirm("你的註冊資料將會消失! 確定要刪除你的資料?");
                if (yes) {                  
@@ -83,7 +104,9 @@
             }        
 			const context = liff.getContext(); //取得環境物件
 			$('input[name="userId"]').val(context.userId); //設定表單欄位值
-			const accessToken = liff.getAccessToken(); //取得用戶 access token	 
+			const accessToken = liff.getAccessToken(); //取得用戶 access token
+			userId = context.userId; //取得用戶 userId
+			console.log('userId ='+ userId)			
        }            
     </script>
 </head>
@@ -92,7 +115,7 @@
         <div id="MainDiv" class="col-md-6" style="margin:5px">
 			<form method='post' enctype='multipart/form-data'>
 			  <img src="static/id.png" width="32" height="32"> 
-			  <input type="text"  id="username" name="username" maxlength="10" size="10 " placeholder="請輸入用戶的正式名字" required/>
+			  <input type="text"  id="username" name="username" maxlength="12" size="14 " placeholder="請輸入用戶的正式名字" required/>
 			  <input type="hidden" name="userId" />		     
 		      <input class="btn btn-primary" id="registername"  type='submit' value='註冊'/>
 		    </form>	
