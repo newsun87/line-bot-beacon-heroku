@@ -42,8 +42,7 @@
              now_page=1;//当前页数
              result=[];	 
               db.ref(db_ref_path).orderByChild("userID").on("value", function(snapshot){	
-				   if (snapshot.val()){	
-					//page = get_num_record(snapshot);				
+				   if (snapshot.val()){								
 					document.getElementById("thead").innerHTML  =""
 				    document.getElementById("tbody").innerHTML  ="" 				   
 				    //	console.log(snapshot.val())					
@@ -140,8 +139,10 @@
 							  "<td>" + username + "</td>" +
                               "<td>" + datetime + "</td></tr>"
                             )  							 
-						  }	       
+						  }							    
                      })
+                     page = get_num_record(count);  
+					 console.log(page);    
                     }
                     else {
 						alert("資料庫不存在")
@@ -249,7 +250,7 @@
         
         function get_num_record(count){			
 			  total_records= count;	
-			  console.log(count)
+			  console.log(count, num)
 			  if(total_records%num==0){
                 page=total_records/num;
                /*数据长度是6的倍数，直接取商作为总页数*/
