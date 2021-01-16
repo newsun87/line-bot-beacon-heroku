@@ -39,19 +39,21 @@
             initializeLiff(YourLiffAppId); 
              num=10;//每頁顯示多少筆紀錄，預設為10.		        
              page=0;//总页数         	   
-             now_page=1;//当前页数	 
+             now_page=1;//当前页数
+             result=[];	 
               db.ref(db_ref_path).orderByChild("userID").on("value", function(snapshot){	
 				   if (snapshot.val()){	
-					page = get_num_record(snapshot);				
+					//page = get_num_record(snapshot);				
 					document.getElementById("thead").innerHTML  =""
 				    document.getElementById("tbody").innerHTML  ="" 				   
 				    //	console.log(snapshot.val())					
-                     result = []; 
+                     //result = []; 
                      count = 0;	                  			
                      snapshot.forEach(function(item){  			  					
 						 result[count]=item.val();
 						 count=count+1;							                    
-                     })                     
+                     }) 
+                     page = get_num_record(count);                    
                    }
                        else {
 						alert("資料庫不存在")
@@ -125,10 +127,8 @@
 				 //查詢資料庫資料並以時間排序			 
 				 db.ref(db_ref_path).orderByChild("datetime").on("value", function(snapshot){
 					if (snapshot.val()){
-					page = get_num_record(snapshot);
-				//	document.getElementById("thead").innerHTML  =""
-				//    document.getElementById("tbody").innerHTML  ="" 			 
-                     snapshot.forEach(function(item){
+					page = get_num_record(snapshot);						 
+                    snapshot.forEach(function(item){
                         //  console.log(item.val());
                           var username = item.val()['name']
 					      var datetime = item.val()['datetime']
@@ -247,15 +247,7 @@
 			const accessToken = liff.getAccessToken(); //取得用戶access token			 
         }   
         
-        function get_num_record(snapshot){
-			db.ref(db_ref_path).orderByChild("userID").on("value", function(snapshot){
-		      var count = 0;
-		      total_records=0;					   
-			  if (snapshot.val()){
-				snapshot.forEach(function(item){
-			     count = count +1;						  
-			    })				    
-			  }
+        function get_num_record(count){			
 			  total_records= count;	
 			  console.log(count)
 			  if(total_records%num==0){
@@ -267,8 +259,7 @@
                page=Math.ceil(total_records/num);
                /*数据长度不是6的倍数，用ceil()函数向上取整*/
                console.log(page) 
-              }                			   
-		   });
+              }  	  
 		   return page						 
        }       
      
