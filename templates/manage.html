@@ -38,27 +38,11 @@
             //init LIFF
             initializeLiff(YourLiffAppId); 
              num=10;//每頁顯示多少筆紀錄，預設為10.		        
-             page=0;//总页数         	   
-             now_page=1;//当前页数
-             result=[];	 
-              db.ref(db_ref_path).orderByChild("userID").on("value", function(snapshot){	
-				   if (snapshot.val()){								
-					document.getElementById("thead").innerHTML  =""
-				    document.getElementById("tbody").innerHTML  ="" 				   
-				    //	console.log(snapshot.val())					
-                     //result = []; 
-                     count = 0;	                  			
-                     snapshot.forEach(function(item){  			  					
-						 result[count]=item.val();
-						 count=count+1;							                    
-                     }) 
-                     page = get_num_record(count);                    
-                   }
-                       else {
-						alert("資料庫不存在")
-					   }
-                       				
-                  });	                              
+             //page=0;//总页数         	   
+           //  now_page=1;//当前页数
+             result=[];	
+             checkin_result=[];	  
+             query_state="register";                                
             $('#ButtonExport').click(function (){              
               var yes = confirm("所有報到資料將會寄到電子信箱....");
                  if (yes) {
@@ -111,37 +95,35 @@
 				});		
             });		
              
-             $('#ButtonQuery').click(function (){ // 查詢用戶報到資料
-				$("#right").hide();
-			    $("#left").hide();
-			    $("#page").hide();
+             $('#ButtonQuery').click(function (){ // 查詢用戶報到資料				
 			    $("#tbody").empty();  
 				$("#thead").empty()
 				$("#thead").append( //新增表格資料
 					   "<tr><th>報到順序</th><th>報到者名稱</th>" +
                        "<th>報到時間</th></tr>" 
-                )                    			
-							    			             
-				 count = 0;	
+                )
+                 $("#right").show();
+			    $("#left").show();
+			  //  $("#page").show();    				 
 				 //查詢資料庫資料並以時間排序			 
-				 db.ref(db_ref_path).orderByChild("datetime").on("value", function(snapshot){
-					if (snapshot.val()){									 
-                    snapshot.forEach(function(item){
+				db.ref(db_ref_path).orderByChild("datetime").on("value", function(snapshot){
+					if (snapshot.val()){
+						query_state = "checkin";
+						count = 0;										 
+                        snapshot.forEach(function(item){
                         //  console.log(item.val());
                           var username = item.val()['name']
 					      var datetime = item.val()['datetime']
 					      var state = item.val()['state']					     
 					      if ((state=='1')&&(datetime!='')){
-						    count = count + 1						    						    
-							$("#tbody").append( //新增表格資料
-							  "<tr><td>" + count + "</td>" +
-							  "<td>" + username + "</td>" +
-                              "<td>" + datetime + "</td></tr>"
-                            )  							 
+							checkin_result[count]=item.val();						    				
+						    count = count + 1;									 
 						  }							    
-                     })
-                   //  page = get_num_record(count);  
-					// console.log(page);    
+                        })
+                     page = get_num_record(count);
+                     page_num['checkin'] = page;  
+					 console.log(page); 
+					 checkin_dataDisplay(checkin_result,0,num)   
                     }
                     else {
 						alert("資料庫不存在")
@@ -149,81 +131,130 @@
                        				
                 });				                
              }); 
-                      
-             $('#ButtonRegisterQuery').click(function (){ // 查詢用戶報到資料 
+                                              
+             $('#ButtonRegisterQuery').click(function (){ // 查詢用戶報到資料				
 				$("#thead").empty()
 				$("#thead").append( //新增表格資料
-					   "<tr><th>註冊編號</th><th>註冊名稱</th></tr>" 
+				  "<tr><th>註冊編號</th><th>註冊名稱</th></tr>" 
                 ) 
 				$("#tbody").empty();  
 			    $("#right").show();
 			    $("#left").show();
-			    $("#page").show();    
-			   dataDisplay(result,0,num);                          
+			    $("#page").show();			    
+			    db.ref(db_ref_path).orderByChild("userID").on("value", function(snapshot){	
+				   if (snapshot.val()){	
+					  query_state="register"; 							
+					//document.getElementById("thead").innerHTML  =""
+				  //  document.getElementById("tbody").innerHTML  ="" 			   
+                    count = 0;	                  			
+                     snapshot.forEach(function(item){  			  					
+						 result[count]=item.val();
+						 count=count+1;							                    
+                     }) 
+                     page = get_num_record(count);
+                     page_num['register'] = page;
+                                         
+                   }
+                       else {
+						alert("資料庫不存在")
+					   }
+					dataDisplay(result,0,num);      
+                       				
+                  });	               
+			                           
              });
-            
+             now_page=1;//当前页数
+             page_state = []; 
+             page_state['register']=1;
+             page_state['checkin']=1;
+             page_num = []; 
+             page_num['register']=0;
+             page_num['checkin']=0;
+                         
              $("#right").click(function(){
-						// index=index+num;   
-                         now_page++; /*每次点击下一页，页数+1*/
-                         //console.log(result);
-                         var begin_index = (now_page-1)*num
-                         var end_index = begin_index +num
-                         console.log(now_page, page, begin_index, end_index)                         
-                         $("#page").text(now_page);/*改变分页按钮上显示的页数*/
-                         if(end_index >= page*num){							
-                           $("#right").hide();
-                            /*如果是最后一页，就禁用a标签*/
-                           }
-                        else{
-                            $("#right").show();
-                            //console.log("Hi")
-                            /*如果不是最后一页，就重新启用a标签*/
-                        }
-
-                         if(now_page<1){ 
-                          $("#left").hide();
-                            /*如果是第一页，就禁用a标签*/
-                         }
-                         else{
-                          $("#left").show();
-                         }
-                          $("#tbody").empty();/*清空上一页显示的数据*/
-                          dataDisplay(result,begin_index,end_index);
-                          /*显示新一页的数据，*/
-                          
-               });
+				if (query_state == "register"){				  
+				  page = page_num['register'];
+				  now_page = page_state['register'];
+				}
+				else {
+				  page = page_num['checkin'];
+				  now_page = page_state['checkin'];
+				}				   
+                now_page++; /*每次點擊下一頁，頁數+1*/
+                //console.log(result);
+                var begin_index = (now_page-1)*num
+                var end_index = begin_index +num
+                console.log(now_page, page, begin_index, end_index)                         
+                //$("#page").text(now_page);/*改变分页按钮上显示的页数*/
+                if(end_index >= page*num){							
+                  $("#right").hide();
+                  /*如果是最後一頁页，就不顯示a標記*/
+                }
+                else{
+                  $("#right").show();                  
+                }
+                if(now_page<1){ 
+                  $("#left").hide();
+                  /*如果是第一頁，就不顯示a標記*/
+                }
+                else{
+                  $("#left").show();
+                }
+                $("#tbody").empty();/*清空上頁顯示的數據*/
+                if (query_state == "register"){
+                  dataDisplay(result,begin_index,end_index);
+                  page_state['register']=now_page
+                }
+                /*顯示新一頁的數據，*/ 
+                else {
+					dataDisplay(checkin_result,begin_index,end_index);
+					page_state['checkin']=now_page
+				}                          
+             });
                
               $("#left").click(function(){
-               now_page--;/*每次点击上一页，页数-1*/
-               var begin_index = (now_page)*num
-               var end_index = begin_index +num               
-               console.log(now_page, page, begin_index, end_index); 
-               $("#page").text(now_page);  //改变分页按钮上显示的页数              
-               if(now_page<=1){
-                $("#left").hide();
-                /*如果是第一页，就禁用a标签*/
-              }
-              else{
-                $("#left").show();
-                /*如果不是第一页，就重新启用a标签*/
-              }
-
-              if(now_page>page){
-                $("#right").hide();
-                /*如果是最后一页，就禁用a标签*/
-              } 
-              else{
-                $("#right").show();
-                /*如果不是最后一页，就重新启用a标签*/
-              }
-              $("#tbody").empty();/*清空上一页显示的数据*/
-              dataDisplay(result,begin_index,end_index);
-            /*显示新一页的数据，*/                   
-        });
-		
-       
-         });
-               
+				if (query_state == "register"){
+				  now_page = page_state['register'];
+				  page = page_num['register'];
+				}
+				else {				 
+				  now_page = page_state['checkin'];
+				   page = page_num['checkin'];
+				}
+				 
+                now_page--;/*每次點擊上一頁，頁數-*/
+                var begin_index = (now_page)*num
+                var end_index = begin_index +num               
+                console.log(now_page, page, begin_index, end_index); 
+               // $("#page").text(now_page);  //改变分页按钮上显示的页数              
+                if(now_page<=1){
+                  $("#left").hide();
+                /*如果是第一頁，就不顯示a標記*/
+                }
+                else{
+                  $("#left").show();
+                /*如果不是第一頁，就重新顯示a標記*/
+                }
+                if(now_page>page){
+                  $("#right").hide();
+                /*如果是最後一頁，就不顯示a標記*/
+                } 
+                else{
+                  $("#right").show();
+                /*如果不是最後一頁，就重新顯示a標記*/
+                }
+                $("#tbody").empty();/*清空上一頁顯示的數據*/
+                if (query_state == "register"){
+                  dataDisplay(result,begin_index,end_index);
+                  page_state['register']=now_page
+                }
+                /*顯示新一頁的數據，*/ 
+                else {
+					dataDisplay(checkin_result,begin_index,end_index);
+					page_state['checkin']=now_page
+				}                            
+        });      
+    });             
         
         function initializeLiff(myLiffId){
             liff
@@ -252,31 +283,43 @@
 			  console.log(count, num)
 			  if(total_records%num==0){
                 page=total_records/num;
-               /*数据长度是6的倍数，直接取商作为总页数*/
+               /*數據長度是 num 的倍数，直接取商作為總頁數*/
                 console.log(page) 
               }
               else{
                page=Math.ceil(total_records/num);
-               /*数据长度不是6的倍数，用ceil()函数向上取整*/
+               /*數據長度不是 num 的倍数，用 ceil() 函数向上取整數*/
                console.log(page) 
               }  	  
 		   return page						 
-       }       
+        }       
      
-     function dataDisplay(result,begin,end){
-	  //console.log(result)    
-      for(var i=begin;i<end;i++){
-        /*用拼接字符串的方式，把数据动态添加到前端页面的表格上*/
-        var username = result[i]['name']					   
-		var linenotify = result[i]['LineNotify']					     
-		if ((linenotify !='')&&(username!='')){		  						    						    
-		   $("#tbody").append( //新增表格資料
+        function dataDisplay(result,begin,end){	      
+         for(var i=begin;i<end;i++){        
+          var username = result[i]['name']					   
+		  var linenotify = result[i]['LineNotify']					     
+		  if ((linenotify !='')&&(username!='')){		  						    						    
+		    $("#tbody").append( //新增表格資料
 		     "<tr><td>" + i + "</td>" +
 		      "<td>" + username + "</td></tr>"
-           )  							 
-	    }       
-      }
-    }     
+		    )		    
+          }       
+         }
+        } 
+        function checkin_dataDisplay(result,begin,end){	        
+         for(var i=begin;i<end;i++){        
+          var username = result[i]['name']					   
+		  var linenotify = result[i]['LineNotify']
+		  var datetime= result[i]['datetime']						     
+		  if ((linenotify !='')&&(username!='')){		  						    						    
+		    $("#tbody").append( //新增表格資料
+			 "<tr><td>" + i + "</td>" +
+			 "<td>" + username + "</td>" +
+             "<td>" + datetime + "</td></tr>"
+            )  				    
+          }       
+         }
+        }         
                            
     </script>
 </head>
@@ -299,9 +342,9 @@
              </table>             
              <div>
               <ul  class="pagination">
-               <li ><a id="left" href="#" >上一頁 | </a></li>  
-               <li class="active"><a id="page" href="#"> 1 </a></li>
-               <li><a id="right" href="#"> | 下一頁</a></li>
+               <li ><a id="left" href="#" >上一頁  </a></li>  
+             <!--  <li class="active"><a id="page" href="#"> 1 </a></li>-->
+               <li><a id="right" href="#">  &nbsp; | 下一頁</a></li>
                </ul>
              </div>  
               <hr />              
