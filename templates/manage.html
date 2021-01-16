@@ -29,10 +29,35 @@
         };
         firebase.initializeApp(firebaseConfig);
         var db_ref_path = "/line-beacon-bot/"; // firebase 資料庫基本路徑  
-        var db = firebase.database();         
+        var db = firebase.database();
+        
         $(document).ready(function (){
+			 $("#right").hide();
+			 $("#left").hide();
+			 $("#page").hide();
             //init LIFF
-            initializeLiff(YourLiffAppId);                 
+            initializeLiff(YourLiffAppId); 
+             num=10;//每頁顯示多少筆紀錄，預設為10.		        
+             page=0;//总页数         	   
+             now_page=1;//当前页数	 
+              db.ref(db_ref_path).orderByChild("userID").on("value", function(snapshot){	
+				   if (snapshot.val()){	
+					page = get_num_record(snapshot);				
+					document.getElementById("thead").innerHTML  =""
+				    document.getElementById("tbody").innerHTML  ="" 				   
+				    //	console.log(snapshot.val())					
+                     result = []; 
+                     count = 0;	                  			
+                     snapshot.forEach(function(item){  			  					
+						 result[count]=item.val();
+						 count=count+1;							                    
+                     })                     
+                   }
+                       else {
+						alert("資料庫不存在")
+					   }
+                       				
+                  });	                              
             $('#ButtonExport').click(function (){              
               var yes = confirm("所有報到資料將會寄到電子信箱....");
                  if (yes) {
@@ -86,13 +111,15 @@
             });		
              
              $('#ButtonQuery').click(function (){ // 查詢用戶報到資料
-				 var count = 0;	
+				$("#right").hide();
+			    $("#left").hide();
+			    $("#page").hide();		   
+				 count = 0;	
 				 //查詢資料庫資料並以時間排序			 
 				 db.ref(db_ref_path).orderByChild("datetime").on("value", function(snapshot){
 					if (snapshot.val()){
 					document.getElementById("thead").innerHTML  =""
-				    document.getElementById("tbody").innerHTML  ="" 
-				    //	console.log(snapshot.val())
+				    document.getElementById("tbody").innerHTML  ="" 			   
 					 $("#thead").append( //新增表格資料
 					   "<tr><th>報到順序</th><th>報到者名稱</th>" +
                        "<th>報到時間</th></tr>" 
@@ -117,8 +144,82 @@
 					}
                        				
                 });				                
-             });        
-         });            
+             }); 
+                      
+             $('#ButtonRegisterQuery').click(function (){ // 查詢用戶報到資料 
+				$("#thead").empty()
+				$("#thead").append( //新增表格資料
+					   "<tr><th>註冊編號</th><th>註冊名稱</th></tr>" 
+                ) 
+				$("#tbody").empty();  
+			    $("#right").show();
+			    $("#left").show();
+			    $("#page").show();    
+			   dataDisplay(result,0,num);                          
+             });
+            
+             $("#right").click(function(){
+						// index=index+num;   
+                         now_page++; /*每次点击下一页，页数+1*/
+                         //console.log(result);
+                         var begin_index = (now_page-1)*num
+                         var end_index = begin_index +num
+                         console.log(now_page, page, begin_index, end_index)                         
+                         $("#page").text(now_page);/*改变分页按钮上显示的页数*/
+                         if(end_index >= page*num){							
+                           $("#right").hide();
+                            /*如果是最后一页，就禁用a标签*/
+                           }
+                        else{
+                            $("#right").show();
+                            console.log("Hi")
+                            /*如果不是最后一页，就重新启用a标签*/
+                        }
+
+                         if(now_page<1){ 
+                          $("#left").hide();
+                            /*如果是第一页，就禁用a标签*/
+                         }
+                         else{
+                          $("#left").show();
+                         }
+                          $("#tbody").empty();/*清空上一页显示的数据*/
+                          dataDisplay(result,begin_index,end_index);
+                          /*显示新一页的数据，*/
+                          
+               });
+               
+              $("#left").click(function(){
+               now_page--;/*每次点击上一页，页数-1*/
+               var begin_index = (now_page)*num
+               var end_index = begin_index +num               
+               console.log(now_page, page, begin_index, end_index); 
+               $("#page").text(now_page);  //改变分页按钮上显示的页数              
+               if(now_page<=1){
+                $("#left").hide();
+                /*如果是第一页，就禁用a标签*/
+              }
+              else{
+                $("#left").show();
+                /*如果不是第一页，就重新启用a标签*/
+              }
+
+              if(now_page>page){
+                $("#right").hide();
+                /*如果是最后一页，就禁用a标签*/
+              } 
+              else{
+                $("#right").show();
+                /*如果不是最后一页，就重新启用a标签*/
+              }
+              $("#tbody").empty();/*清空上一页显示的数据*/
+              dataDisplay(result,begin_index,end_index);
+            /*显示新一页的数据，*/                   
+        });
+		
+       
+         });
+               
         
         function initializeLiff(myLiffId){
             liff
@@ -140,29 +241,79 @@
 			const context = liff.getContext(); //取得環境物件
 			$('input[name="userId"]').val(context.userId); //設定表單欄位值
 			const accessToken = liff.getAccessToken(); //取得用戶access token			 
-        }            
+        }   
+        
+        function get_num_record(snapshot){
+			db.ref(db_ref_path).orderByChild("LineNotify").on("value", function(snapshot){
+		      var count = 0;
+		      total_records=0;					   
+			  if (snapshot.val()){
+				snapshot.forEach(function(item){
+			     count = count +1;						  
+			    })				    
+			  }
+			  total_records= count;	
+			  console.log(count)
+			  if(total_records%num==0){
+                page=total_records/num;
+               /*数据长度是6的倍数，直接取商作为总页数*/
+                console.log(page) 
+              }
+              else{
+               page=Math.ceil(total_records/num);
+               /*数据长度不是6的倍数，用ceil()函数向上取整*/
+               console.log(page) 
+              }                			   
+		   });
+		   return page						 
+       }       
+     
+     function dataDisplay(result,begin,end){
+	  //console.log(result)    
+      for(var i=begin;i<end;i++){
+        /*用拼接字符串的方式，把数据动态添加到前端页面的表格上*/
+        var username = result[i]['name']					   
+		var linenotify = result[i]['LineNotify']					     
+		if ((linenotify !='')&&(username!='')){
+		  						    						    
+		   $("#tbody").append( //新增表格資料
+		     "<tr><td>" + i + "</td>" +
+		      "<td>" + username + "</td></tr>"
+           )  							 
+	    }	       
+       
+      }
+    }                    
     </script>
 </head>
 <body>
     <div class="row">		
         <div id="MainDiv" class="col-md-6" style="margin:5px">		    
-             <img src="static/query.png" width="32" height="32">             
-             <button class="btn btn-primary" id="ButtonQuery">查詢</button> 
+         <img src="static/query.png" width="32" height="32">            
+             <button class="btn btn-primary" id="ButtonQuery">報到查詢</button> 
+             <button class="btn btn-primary" id="ButtonRegisterQuery">註冊查詢</button><br/> 
              <img src="static/arrange.png" width="32" height="32">                        
-             <button class="btn btn-primary" id="ButtonExport">彙整</button>
+             <button class="btn btn-primary" id="ButtonExport">報到紀錄彙整</button>
              <img src="static/clear.png" width="32" height="32">             
-             <button class="btn btn-primary" id="ButtonClear">清除</button>
+             <button class="btn btn-primary" id="ButtonClear">報到紀錄清除</button>
              <p>             
              <table id="mainTable" class="display hover" border="1">	    
               <thead id="thead" align="center">               
               </thead> 
               <tbody id="tbody" align="center">		 
               </tbody>
-             </table>           
-             <hr />                
+             </table>             
+             <div>
+              <ul class="pagination">
+               <li><a id="left" href="#">上一頁 | </a></li>  
+               <li class="active"><a id="page" href="#"> 1 </a></li>
+               <li><a id="right" href="#"> | 下一頁</a></li>
+               </ul>
+             </div>  
+              <hr />              
              <label>訊息顯示</label>
              <textarea class="form-control" rows="5" type="text" id="field_info">{{data}}</textarea> <br />           
-        </div>
+          </div>
     </div>
 </body>
 </html>

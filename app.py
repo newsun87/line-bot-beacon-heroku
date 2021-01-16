@@ -6,27 +6,26 @@ from linebot import (LineBotApi, WebhookHandler)
 from linebot.exceptions import (
     InvalidSignatureError
 )
-#from linebot.models import (TemplateSendMessage, MessageEvent, TextMessage, TextSendMessage, BeaconEvent)
 from linebot.models import *
 import requests
 import base64
 import json
-import requests
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import db
 from flask import render_template
 import time
+from datetime import datetime as dt
 import pytz
 import smtplib
 from email.mime.multipart import MIMEMultipart #email內容載體
 from email.mime.text import MIMEText #用於製作文字內文
 from email.mime.base import MIMEBase #用於承載附檔
 from email import encoders #用於附檔編碼
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import db
+
 from line_notify import LineNotify
 import os
-from datetime import datetime as dt
-import pytz
+
 
 line_url_token = '3igcvnwqH2eV54CZN6N67CpYZDBgiUNW34qjCK07tPL'
 notify = LineNotify(line_url_token)
