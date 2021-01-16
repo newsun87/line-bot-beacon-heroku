@@ -113,17 +113,20 @@
              $('#ButtonQuery').click(function (){ // 查詢用戶報到資料
 				$("#right").hide();
 			    $("#left").hide();
-			    $("#page").hide();		   
+			    $("#page").hide();
+				$("#thead").empty()
+				$("#thead").append( //新增表格資料
+					   "<tr><th>報到順序</th><th>報到者名稱</th>" +
+                       "<th>報到時間</th></tr>" 
+                )                    			
+				$("#tbody").empty();  			    			             
 				 count = 0;	
 				 //查詢資料庫資料並以時間排序			 
 				 db.ref(db_ref_path).orderByChild("datetime").on("value", function(snapshot){
 					if (snapshot.val()){
+					page = get_num_record(snapshot);
 					document.getElementById("thead").innerHTML  =""
-				    document.getElementById("tbody").innerHTML  ="" 			   
-					 $("#thead").append( //新增表格資料
-					   "<tr><th>報到順序</th><th>報到者名稱</th>" +
-                       "<th>報到時間</th></tr>" 
-                     )                    			
+				    document.getElementById("tbody").innerHTML  ="" 			 
                      snapshot.forEach(function(item){
                         //  console.log(item.val());
                           var username = item.val()['name']
@@ -244,7 +247,7 @@
         }   
         
         function get_num_record(snapshot){
-			db.ref(db_ref_path).orderByChild("LineNotify").on("value", function(snapshot){
+			db.ref(db_ref_path).orderByChild("userID").on("value", function(snapshot){
 		      var count = 0;
 		      total_records=0;					   
 			  if (snapshot.val()){
@@ -274,16 +277,15 @@
         /*用拼接字符串的方式，把数据动态添加到前端页面的表格上*/
         var username = result[i]['name']					   
 		var linenotify = result[i]['LineNotify']					     
-		if ((linenotify !='')&&(username!='')){
-		  						    						    
+		if ((linenotify !='')&&(username!='')){		  						    						    
 		   $("#tbody").append( //新增表格資料
 		     "<tr><td>" + i + "</td>" +
 		      "<td>" + username + "</td></tr>"
            )  							 
-	    }	       
-       
+	    }       
       }
-    }                    
+    }     
+                           
     </script>
 </head>
 <body>
