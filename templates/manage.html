@@ -125,8 +125,7 @@
 				 count = 0;	
 				 //查詢資料庫資料並以時間排序			 
 				 db.ref(db_ref_path).orderByChild("datetime").on("value", function(snapshot){
-					if (snapshot.val()){
-					page = get_num_record(snapshot);						 
+					if (snapshot.val()){									 
                     snapshot.forEach(function(item){
                         //  console.log(item.val());
                           var username = item.val()['name']
@@ -141,8 +140,8 @@
                             )  							 
 						  }							    
                      })
-                     page = get_num_record(count);  
-					 console.log(page);    
+                   //  page = get_num_record(count);  
+					// console.log(page);    
                     }
                     else {
 						alert("資料庫不存在")
