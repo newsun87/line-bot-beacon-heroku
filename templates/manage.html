@@ -42,7 +42,7 @@
            //  now_page=1;//当前页数
              result=[];	
              checkin_result=[];	  
-             query_state="register";                                
+             query_state="";                                
             $('#ButtonExport').click(function (){              
               var yes = confirm("所有報到資料將會寄到電子信箱....");
                  if (yes) {
@@ -185,7 +185,7 @@
                 var begin_index = (now_page-1)*num
                 var end_index = begin_index +num
                 console.log(now_page, page, begin_index, end_index)                         
-                //$("#page").text(now_page);/*改变分页按钮上显示的页数*/
+               // $("#page").text(now_page);/*改变分页按钮上显示的页数*/
                 if(end_index >= page*num){							
                   $("#right").hide();
                   /*如果是最後一頁页，就不顯示a標記*/
@@ -207,7 +207,7 @@
                 }
                 /*顯示新一頁的數據，*/ 
                 else {
-					dataDisplay(checkin_result,begin_index,end_index);
+					checkin_dataDisplay(checkin_result,begin_index,end_index);
 					page_state['checkin']=now_page
 				}                          
              });
@@ -226,8 +226,8 @@
                 var begin_index = (now_page)*num
                 var end_index = begin_index +num               
                 console.log(now_page, page, begin_index, end_index); 
-               // $("#page").text(now_page);  //改变分页按钮上显示的页数              
-                if(now_page<=1){
+              //  $("#page").text(now_page);  //改变分页按钮上显示的页数              
+                if(now_page<1){
                   $("#left").hide();
                 /*如果是第一頁，就不顯示a標記*/
                 }
@@ -250,7 +250,7 @@
                 }
                 /*顯示新一頁的數據，*/ 
                 else {
-					dataDisplay(checkin_result,begin_index,end_index);
+					checkin_dataDisplay(checkin_result,begin_index,end_index);
 					page_state['checkin']=now_page
 				}                            
         });      
@@ -306,6 +306,7 @@
           }       
          }
         } 
+        
         function checkin_dataDisplay(result,begin,end){	        
          for(var i=begin;i<end;i++){        
           var username = result[i]['name']					   
@@ -343,7 +344,7 @@
              <div>
               <ul  class="pagination">
                <li ><a id="left" href="#" >上一頁  </a></li>  
-             <!--  <li class="active"><a id="page" href="#"> 1 </a></li>-->
+              <!-- <li class="active"><a id="page" href="#"> 1 </a></li> -->
                <li><a id="right" href="#">  &nbsp; | 下一頁</a></li>
                </ul>
              </div>  
